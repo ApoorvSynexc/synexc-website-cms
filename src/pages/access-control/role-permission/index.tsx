@@ -21,7 +21,6 @@ const SUBJECT_LABEL: Record<string, string> = {
   certification: 'Certifications',
   key_stat: 'Key Stats',
   gallery_image: 'Photo Gallery',
-  seo_page: 'Page SEO',
   site_settings: 'Site Settings',
   inquiry: 'Inquiries',
   user: 'Users',

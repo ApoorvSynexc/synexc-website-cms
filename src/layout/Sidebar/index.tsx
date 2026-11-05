@@ -41,7 +41,7 @@ const MAIN_NAV: NavItem[] = [
     label: 'Site Settings',
     icon: FiSettings,
     to: '/site-settings',
-    anyOf: [['site_settings', 'read'], ['seo_page', 'read']],
+    anyOf: [['site_settings', 'read']],
   },
   {
     label: 'Access Control',

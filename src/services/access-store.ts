@@ -26,7 +26,6 @@ export const SUBJECT_ACTIONS: Record<string, string[]> = {
   certification: CRUD,
   key_stat: CRUD,
   gallery_image: CRUD,
-  seo_page: CRUD,
   site_settings: ['read', 'update'],
   inquiry: ['read', 'update', 'delete'],
   user: CRUD,
@@ -65,7 +64,7 @@ const seed = (): State => ({
         ...['read', 'create', 'update', 'delete'].map((a) => `blog_category:${a}`),
         ...['read', 'create', 'update', 'delete'].map((a) => `case_study:${a}`),
         ...['read', 'create', 'update', 'delete'].map((a) => `announcement:${a}`),
-        ...['hero_slide', 'testimonial', 'faq', 'partner_logo', 'team_member', 'timeline_event', 'certification', 'key_stat', 'gallery_image', 'seo_page'].flatMap((s) =>
+        ...['hero_slide', 'testimonial', 'faq', 'partner_logo', 'team_member', 'timeline_event', 'certification', 'key_stat', 'gallery_image'].flatMap((s) =>
           ['read', 'create', 'update', 'delete'].map((a) => `${s}:${a}`),
         ),
       ],
@@ -123,4 +122,6 @@ export const persist = () => {
   }
 }
 
-export const permissionIdsOf = (role: Role) => (role.isSystem ? ALL_PERMISSION_IDS : role.permissionIds)
+/** Ignores permission ids saved before a module was removed, so counts and checks stay accurate. */
+export const permissionIdsOf = (role: Role) =>
+  role.isSystem ? ALL_PERMISSION_IDS : role.permissionIds.filter((id) => ALL_PERMISSION_IDS.includes(id))

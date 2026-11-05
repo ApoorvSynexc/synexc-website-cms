@@ -35,7 +35,7 @@ function HomeRedirect() {
   if (can('case_study', 'read')) return <Navigate to="/case-studies" replace />
   if (can('announcement', 'read')) return <Navigate to="/announcements" replace />
   if (can('inquiry', 'read')) return <Navigate to="/inquiries" replace />
-  if (can('site_settings', 'read') || can('seo_page', 'read')) return <Navigate to="/site-settings" replace />
+  if (can('site_settings', 'read')) return <Navigate to="/site-settings" replace />
   if (WEBSITE_CONTENT_SUBJECTS.some((s) => can(s, 'read'))) return <Navigate to="/website-content" replace />
   if (can('user', 'read') || can('role', 'read') || can('role_permission', 'read')) {
     return <Navigate to="/access-control" replace />
@@ -69,11 +69,10 @@ export function AppRoutes() {
           path="/inquiries"
           element={<PermissionRoute anyOf={[['inquiry', 'read']]}><InquiriesPage /></PermissionRoute>}
         />
-        <Route path="/site-settings" element={<Navigate to="/site-settings/general" replace />} />
         <Route
-          path="/site-settings/:module"
+          path="/site-settings"
           element={
-            <PermissionRoute anyOf={[['site_settings', 'read'], ['seo_page', 'read']]}>
+            <PermissionRoute anyOf={[['site_settings', 'read']]}>
               <SiteSettingsPage />
             </PermissionRoute>
           }
