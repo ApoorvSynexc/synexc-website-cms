@@ -1,13 +1,91 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import 'tailwindcss';
+@import './theme/palette.css';
+
+/* Expose palette CSS variables as Tailwind theme tokens so classes like
+   `bg-surface`, `text-heading`, `text-accent`, `border-border` work. */
+@theme inline {
+  --color-surface: var(--bg);
+  --color-surface-2: var(--bg-elevated);
+  --color-body: var(--text);
+  --color-heading: var(--text-h);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-border: var(--border);
+
+  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, Consolas, monospace;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+:root {
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
+
+body {
+  margin: 0;
+  min-height: 100svh;
+}
+
+/* Browsers default <button> to a plain arrow cursor, not pointer (unlike
+   <a href>). Every clickable button in this app should read as clickable. */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+/* Rich text editor content (TipTap) — also reusable for previews. */
+.rte-content {
+  min-height: 16rem;
+  max-height: 28rem;
+  overflow-y: auto;
+  padding: 0.75rem 1rem;
+  outline: none;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+.rte-content > * + * { margin-top: 0.75rem; }
+.rte-content h2 { font-size: 1.25rem; font-weight: 700; color: var(--text-h); }
+.rte-content h3 { font-size: 1.1rem; font-weight: 600; color: var(--text-h); }
+.rte-content strong { color: var(--text-h); }
+.rte-content ul { list-style: disc; padding-left: 1.5rem; }
+.rte-content ol { list-style: decimal; padding-left: 1.5rem; }
+.rte-content a { color: var(--accent); text-decoration: underline; }
+.rte-content blockquote {
+  border-left: 3px solid var(--accent);
+  background: var(--bg-elevated);
+  padding: 0.5rem 1rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+.rte-content pre {
+  background: var(--code-bg);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  overflow-x: auto;
+}
+.rte-content img { max-width: 100%; border-radius: 0.5rem; }
+.rte-content table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.rte-content th,
+.rte-content td { border: 1px solid var(--border); padding: 0.4rem 0.6rem; vertical-align: top; }
+.rte-content th { background: var(--bg-elevated); color: var(--text-h); text-align: left; }
+.rte-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: color-mix(in srgb, var(--text) 60%, transparent);
+}
+.rte-content hr { border: 0; border-top: 1px solid var(--border); margin: 1rem 0; }
+.rte-content td.selectedCell,
+.rte-content th.selectedCell { background: var(--accent-bg); }
