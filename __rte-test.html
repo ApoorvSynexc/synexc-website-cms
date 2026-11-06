@@ -1,9 +1,0 @@
-<!doctype html><html><body><div id="root"></div>
-<script type="module">
-import React from 'react'
-import { createRoot } from 'react-dom/client'
-import { RichTextEditor } from '/src/components/RichTextEditor/index.tsx'
-import '/src/index.css'
-function App(){ const [v,setV]=React.useState('<p>Intro text here and the heading part and the tail end.</p>'); window.__v=()=>v; return React.createElement(RichTextEditor,{value:v,onChange:setV}) }
-createRoot(document.getElementById('root')).render(React.createElement(App))
-</script></body></html>
