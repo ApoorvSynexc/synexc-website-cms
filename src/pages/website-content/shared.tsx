@@ -13,6 +13,10 @@ export const linkUrl = assetUrl.messages({
   'string.pattern.base': 'Enter an http(s) link or a site path like /contact-us',
 })
 
+/** The picture to show for a linked file: its thumbnail when there is one, else the file itself. */
+export const mediaSrc = (media?: { url: string; thumbnailUrl: string | null } | null): string =>
+  media ? (media.thumbnailUrl ?? media.url) : ''
+
 export function Thumb({ src, alt = '', wide }: { src: string; alt?: string; wide?: boolean }) {
   const size = wide ? 'h-10 w-16' : 'h-10 w-10'
   return src ? (

@@ -1,5 +1,5 @@
 import Joi from 'joi'
-import type { AnnouncementType } from '../../../services'
+import type { AnnouncementType, Media } from '../../../services'
 
 export type AnnouncementFormValues = {
   badge: string
@@ -10,7 +10,8 @@ export type AnnouncementFormValues = {
   venue: string
   ctaLabel: string
   ctaUrl: string
-  image: string
+  /** The uploaded logo / image (its id is what gets saved), or null. */
+  image: Media | null
   startDate: string
   endDate: string
   isActive: boolean
@@ -46,14 +47,7 @@ export const announcementSchema = Joi.object<AnnouncementFormValues>({
       'string.uri': 'Enter a valid http(s) link',
       'string.uriCustomScheme': 'Enter a valid link starting with https://',
     }),
-  image: Joi.string()
-    .trim()
-    .uri({ scheme: ['http', 'https'] })
-    .allow('')
-    .messages({
-      'string.uri': 'Enter a valid http(s) image URL',
-      'string.uriCustomScheme': 'Enter a valid image URL starting with https://',
-    }),
+  image: Joi.object().allow(null).messages({ 'object.base': 'Upload a valid image' }),
   startDate: date.required().messages({
     'string.empty': 'Start date is required',
     'string.pattern.base': 'Enter a valid date',

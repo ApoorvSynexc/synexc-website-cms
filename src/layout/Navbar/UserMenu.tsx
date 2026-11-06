@@ -34,7 +34,7 @@ export function UserMenu({ user, fullName, onClose, onSignOut, signingOut }: Use
   return (
     <div className="absolute right-0 z-20 mt-2 w-72 overflow-hidden rounded-xl border border-border bg-surface shadow-lg">
       <div className="flex items-center gap-3 bg-surface-2 p-4">
-        <Avatar name={fullName} src={user?.profile?.url} size="md" />
+        <Avatar name={fullName} src={user?.avatar?.thumbnailUrl ?? user?.avatar?.url} size="md" />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-heading">{fullName}</p>
           {user?.role && (

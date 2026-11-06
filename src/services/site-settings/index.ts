@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { delay } from '../../lib'
+import { useHttpClient } from '../../hooks/useHttpClient'
 
 /** Company-wide details the website repeats in the header, footer and contact page. */
 export type SiteSettings = {
@@ -24,40 +24,37 @@ export type SiteSettings = {
 
 export const siteSettingsKey = ['site-settings'] as const
 
-// ---- Mock store (replace with http calls once the API is ready) ----
-// Seeded from the values hardcoded in the website's footer, header and contact page.
-let settings: SiteSettings = {
-  phone: '+91 9810512585',
-  phoneHours: 'Available 10 AM - 7 PM IST',
-  email: 'contact@synexc.com',
-  emailNote: 'We usually respond within 24 hours',
-  whatsapp: '919910189504',
-  companyName: 'Synexc IT Solutions LLP',
-  address: 'Bhutani Cyber Park, Tower B, Block- C,\n6th Floor, Sector 62 Noida,\nUttar Pradesh 201309, India',
-  facebook: 'https://www.facebook.com/profile.php?id=61573616079229',
-  linkedin: 'https://www.linkedin.com/company/synexc/about/?viewAsMember=true',
-  instagram: 'https://www.instagram.com/synexc_global/?next=%2F&hl=en',
-  copyrightName: 'Synexc Technologies',
-  privacyUrl: '/contact-us',
-  termsUrl: '/contact-us',
-}
+const FIELDS: (keyof SiteSettings)[] = [
+  'phone',
+  'phoneHours',
+  'email',
+  'emailNote',
+  'whatsapp',
+  'companyName',
+  'address',
+  'facebook',
+  'linkedin',
+  'instagram',
+  'copyrightName',
+  'privacyUrl',
+  'termsUrl',
+]
+
+/** Keeps only the editable fields and turns the API's nulls into '' so form inputs stay controlled. */
+const fromApi = (raw: Partial<Record<keyof SiteSettings, string | null>>): SiteSettings =>
+  Object.fromEntries(FIELDS.map((key) => [key, raw[key] ?? ''])) as SiteSettings
 
 export function useSiteSettings() {
+  const http = useHttpClient()
   const queryClient = useQueryClient()
 
   const getSettings = useQuery({
     queryKey: siteSettingsKey,
-    queryFn: async () => {
-      await delay(250)
-      return { ...settings }
-    },
+    queryFn: async () => fromApi((await http.get<Partial<Record<keyof SiteSettings, string | null>>>('/v1/site-setting')).data),
   })
 
   const updateSettings = useMutation({
-    mutationFn: async (input: SiteSettings) => {
-      await delay()
-      settings = { ...input }
-    },
+    mutationFn: (input: SiteSettings) => http.put('/v1/site-setting', input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: siteSettingsKey }),
   })
 

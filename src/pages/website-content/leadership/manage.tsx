@@ -1,21 +1,40 @@
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { joiResolver } from '@hookform/resolvers/joi'
-import { Button, Modal, TextField, ToggleButton, Typography } from '../../../components'
+import { Button, Modal, TextField, ToggleButton, Typography, ImageUpload } from '../../../components'
 import { getErrorMessage } from '../../../lib'
-import { useLeadership, type TeamMember } from '../../../services'
+import { useLeadership, type TeamMember, type TeamMemberInput } from '../../../services'
 import type { ManageModalProps } from '../ContentList'
-import { ImagePreview } from '../shared'
 import { teamMemberSchema, type TeamMemberFormValues } from './validations'
 
 const empty = (): TeamMemberFormValues => ({
   name: '',
   role: '',
   bio: '',
-  photo: '',
+  photo: null,
   linkedin: '',
   email: '',
   isActive: true,
+})
+
+const toFormValues = (item: TeamMember): TeamMemberFormValues => ({
+  name: item.name,
+  role: item.role,
+  bio: item.bio,
+  photo: item.photo,
+  linkedin: item.linkedin,
+  email: item.email,
+  isActive: item.isActive,
+})
+
+const toPayload = (v: TeamMemberFormValues): TeamMemberInput => ({
+  name: v.name,
+  role: v.role,
+  bio: v.bio,
+  photoId: v.photo?.id ?? null,
+  linkedin: v.linkedin,
+  email: v.email,
+  isActive: v.isActive,
 })
 
 export default function ManageLeadershipModal({ open, onClose, item }: ManageModalProps<TeamMember>) {
@@ -34,17 +53,16 @@ export default function ManageLeadershipModal({ open, onClose, item }: ManageMod
 
   useEffect(() => {
     if (!open) return
-    reset(item ? { ...item } : empty())
+    reset(item ? toFormValues(item) : empty())
     mutation.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, item])
 
-  const photo = watch('photo')
   const bioLength = watch('bio')?.length ?? 0
 
   const onSubmit = (values: TeamMemberFormValues) => {
-    if (isEdit && item) updateItem.mutate({ id: item.id, ...values }, { onSuccess: onClose })
-    else createItem.mutate(values, { onSuccess: onClose })
+    if (isEdit && item) updateItem.mutate({ id: item.id, ...toPayload(values) }, { onSuccess: onClose })
+    else createItem.mutate(toPayload(values), { onSuccess: onClose })
   }
 
   return (
@@ -97,16 +115,19 @@ export default function ManageLeadershipModal({ open, onClose, item }: ManageMod
           </div>
         </div>
 
-        <div>
-          <TextField
-            label="Photo (optional)"
-            placeholder="https://… or /team/name.jpg"
-            helperText="Without a photo the website shows the person's initial."
-            error={errors.photo?.message}
-            {...register('photo')}
-          />
-          {!errors.photo && <ImagePreview src={photo} />}
-        </div>
+        <Controller
+          name="photo"
+          control={control}
+          render={({ field }) => (
+            <ImageUpload
+              label="Photo (optional)"
+              helperText="Without a photo the website shows the person's initial."
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.photo?.message as string | undefined}
+            />
+          )}
+        />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField

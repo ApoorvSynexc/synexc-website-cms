@@ -1,11 +1,11 @@
-import { usePartnerLogo, type PartnerLogo } from '../../../services'
+import { usePartnerLogo, type PartnerLogo, type PartnerLogoInput } from '../../../services'
 import { ContentList } from '../ContentList'
-import { Thumb } from '../shared'
+import { mediaSrc, Thumb } from '../shared'
 import ManagePartnerLogoModal from './manage'
 
 export default function PartnerLogoModule() {
   return (
-    <ContentList<PartnerLogo>
+    <ContentList<PartnerLogo, PartnerLogoInput>
       subject="partner_logo"
       title="Partner & Client Logos"
       description="Logos shown in the “Our Trusted Partners” strip and client sections."
@@ -20,7 +20,7 @@ export default function PartnerLogoModule() {
           header: 'Logo',
           render: (row) => (
             <div className="flex items-center gap-3">
-              <Thumb src={row.logo} wide />
+              <Thumb src={mediaSrc(row.logo)} wide />
               <span className="font-medium text-heading">{row.name}</span>
             </div>
           ),

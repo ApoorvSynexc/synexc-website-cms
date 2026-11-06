@@ -1,65 +1,72 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { delay, newId } from '../../lib'
+import { useHttpClient } from '../../hooks/useHttpClient'
+import { toQuery } from '../../lib'
 
 export type ContentItem = { id: string; isActive: boolean }
 
+type RawRow = { status: 'ACTIVE' | 'INACTIVE' | 'DELETED' } & Record<string, unknown>
+
+type Options<T extends ContentItem, I extends { isActive: boolean }> = {
+  /** React Query cache key for this list. */
+  key: string
+  /** API route segment, e.g. 'faq' -> /v1/faq/list. */
+  path: string
+  /** Turn one API row into the shape the page uses. Default: the row with `status` replaced by `isActive`. */
+  fromApi?: (row: RawRow) => T
+  /** Extra conversion of what the page sends (e.g. a number field). `isActive` -> `status` is always applied. */
+  toApi?: (input: Partial<I>) => Record<string, unknown>
+}
+
 /**
- * In-memory CRUD + reorder for the small, ordered lists on the website
- * (testimonials, hero slides, FAQs, partner logos). Mock only: when the API
- * is ready, replace the bodies inside each `queryFn` / `mutationFn` below
- * with http calls — callers (pages) do not change.
+ * The small, ordered lists on the website (hero slides, testimonials, FAQs, partner logos, team, timeline,
+ * certifications, key stats, gallery) all share the same six endpoints:
+ *   GET /list · POST / · PUT / · DELETE /?id= · PUT /move { id, direction }
+ * "Visible on website" is the row `status` (ACTIVE / INACTIVE); the pages work with a plain `isActive` boolean.
  */
-export function createContentCollection<T extends ContentItem>(key: string, seed: T[]) {
-  let items: T[] = [...seed]
+export function createContentCollection<T extends ContentItem, I extends { isActive: boolean } = Omit<T, 'id'>>({
+  key,
+  path,
+  fromApi = ({ status, ...rest }) => ({ ...rest, isActive: status === 'ACTIVE' }) as unknown as T,
+  toApi = (input) => input,
+}: Options<T, I>) {
   const queryKey = [key] as const
 
+  /** What goes over the wire: the page's `isActive` becomes `status`, only for keys actually provided. */
+  const prepare = (input: Partial<I>) => {
+    const { isActive, ...rest } = toApi(input) as Partial<I> & Record<string, unknown>
+    return { ...rest, ...(isActive !== undefined && { status: isActive ? 'ACTIVE' : 'INACTIVE' }) }
+  }
+
   return function useContentCollection() {
+    const http = useHttpClient()
     const queryClient = useQueryClient()
     const invalidate = () => queryClient.invalidateQueries({ queryKey })
 
     const getItems = useQuery({
       queryKey,
-      queryFn: async () => {
-        await delay(250)
-        return [...items]
-      },
+      queryFn: async () => (await http.get<RawRow[]>(`/v1/${path}/list`)).data.map(fromApi),
     })
 
     const createItem = useMutation({
-      mutationFn: async (input: Omit<T, 'id'>) => {
-        await delay()
-        items = [...items, { ...input, id: newId() } as T]
-      },
+      mutationFn: (input: I) => http.post<RawRow>(`/v1/${path}`, prepare(input)),
       onSuccess: invalidate,
     })
 
     const updateItem = useMutation({
-      mutationFn: async ({ id, ...patch }: Partial<Omit<T, 'id'>> & { id: string }) => {
-        await delay(200)
-        items = items.map((item) => (item.id === id ? { ...item, ...patch } : item))
-      },
+      mutationFn: ({ id, ...patch }: Partial<I> & { id: string }) =>
+        http.put<RawRow>(`/v1/${path}`, { id, ...prepare(patch as unknown as Partial<I>) }),
       onSuccess: invalidate,
     })
 
     const deleteItem = useMutation({
-      mutationFn: async (id: string) => {
-        await delay()
-        items = items.filter((item) => item.id !== id)
-      },
+      mutationFn: (id: string) => http.delete<null>(`/v1/${path}${toQuery({ id })}`),
       onSuccess: invalidate,
     })
 
     /** Swap an item with its neighbour — the order here is the order on the website. */
     const moveItem = useMutation({
-      mutationFn: async ({ id, direction }: { id: string; direction: 'up' | 'down' }) => {
-        await delay(150)
-        const from = items.findIndex((item) => item.id === id)
-        const to = direction === 'up' ? from - 1 : from + 1
-        if (from < 0 || to < 0 || to >= items.length) return
-        const next = [...items]
-        ;[next[from], next[to]] = [next[to], next[from]]
-        items = next
-      },
+      mutationFn: ({ id, direction }: { id: string; direction: 'up' | 'down' }) =>
+        http.put<null>(`/v1/${path}/move`, { id, direction }),
       onSuccess: invalidate,
     })
 
@@ -67,4 +74,6 @@ export function createContentCollection<T extends ContentItem>(key: string, seed
   }
 }
 
-export type ContentCollectionHook<T extends ContentItem> = ReturnType<typeof createContentCollection<T>>
+export type ContentCollectionHook<T extends ContentItem, I extends { isActive: boolean } = Omit<T, 'id'>> = ReturnType<
+  typeof createContentCollection<T, I>
+>

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { delay, mockError, newId } from '../../lib'
-import { SEED_CASE_STUDIES } from './seed'
+import { useHttpClient } from '../../hooks/useHttpClient'
+import { dateOnly, toQuery, totalRecords } from '../../lib'
 import type { CaseStudy, CaseStudyInput, CaseStudyListParams } from './types'
 
 export { CASE_STUDY_CATEGORIES } from './types'
@@ -17,16 +17,10 @@ export const caseStudyKeys = {
   list: (params: CaseStudyListParams) => [...caseStudyKeys.all, 'list', params] as const,
 }
 
-// ---- Mock store (replace the bodies below with http calls once the API is ready) ----
-let caseStudies: CaseStudy[] = [...SEED_CASE_STUDIES]
-
-const assertSlugUnique = (slug: string, ignoreId?: string) => {
-  if (caseStudies.some((c) => c.id !== ignoreId && c.slug === slug)) {
-    throw mockError('A case study with this slug already exists', 409)
-  }
-}
+const fromApi = (study: CaseStudy): CaseStudy => ({ ...study, publishedAt: dateOnly(study.publishedAt) })
 
 export function useCaseStudy(options: { listParams?: CaseStudyListParams } = {}) {
+  const http = useHttpClient()
   const queryClient = useQueryClient()
   const invalidate = () => queryClient.invalidateQueries({ queryKey: caseStudyKeys.all })
   const { listParams } = options
@@ -35,46 +29,27 @@ export function useCaseStudy(options: { listParams?: CaseStudyListParams } = {})
     queryKey: caseStudyKeys.list(listParams ?? { page: 1, limit: 10 }),
     enabled: Boolean(listParams),
     queryFn: async () => {
-      await delay(250)
-      const { page, limit, search, category, status } = listParams!
-      const q = search?.trim().toLowerCase()
-      const filtered = caseStudies
-        .filter(
-          (c) => !q || c.title.toLowerCase().includes(q) || c.client.toLowerCase().includes(q),
-        )
-        .filter((c) => !category || c.category === category)
-        .filter((c) => !status || c.status === status)
-        .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
-      return {
-        caseStudies: filtered.slice((page - 1) * limit, page * limit),
-        meta: { totalRecords: filtered.length },
-      }
+      const { page, limit, search, category, publishStatus } = listParams!
+      const res = await http.get<CaseStudy[]>(
+        `/v1/case-study/list${toQuery({ page, limit, search, category, publishStatus })}`,
+      )
+      return { caseStudies: res.data.map(fromApi), meta: { totalRecords: totalRecords(res.meta) } }
     },
   })
 
   const createCaseStudy = useMutation({
-    mutationFn: async (input: CaseStudyInput) => {
-      await delay()
-      assertSlugUnique(input.slug)
-      caseStudies = [{ id: newId(), createdAt: new Date().toISOString(), ...input }, ...caseStudies]
-    },
+    mutationFn: (input: CaseStudyInput) => http.post<CaseStudy>('/v1/case-study', input),
     onSuccess: invalidate,
   })
 
   const updateCaseStudy = useMutation({
-    mutationFn: async ({ id, ...input }: Partial<CaseStudyInput> & { id: string }) => {
-      await delay()
-      if (input.slug) assertSlugUnique(input.slug, id)
-      caseStudies = caseStudies.map((c) => (c.id === id ? { ...c, ...input } : c))
-    },
+    mutationFn: ({ id, ...input }: Partial<CaseStudyInput> & { id: string }) =>
+      http.put<CaseStudy>('/v1/case-study', { id, ...input }),
     onSuccess: invalidate,
   })
 
   const deleteCaseStudy = useMutation({
-    mutationFn: async (id: string) => {
-      await delay()
-      caseStudies = caseStudies.filter((c) => c.id !== id)
-    },
+    mutationFn: (id: string) => http.delete<null>(`/v1/case-study${toQuery({ id })}`),
     onSuccess: invalidate,
   })
 

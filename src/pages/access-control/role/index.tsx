@@ -3,21 +3,21 @@ import { FiEdit2, FiLock, FiPlus, FiTrash2 } from 'react-icons/fi'
 import { Button, ConfirmDialog, ModuleHeader, Table, type TableColumn } from '../../../components'
 import { useSession } from '../../../hooks'
 import { getErrorMessage } from '../../../lib'
-import { useRole, type RoleWithCount } from '../../../services'
+import { useRole, type Role } from '../../../services'
 import ManageRoleModal from './manage'
 
 export default function RoleModule() {
   const { can } = useSession()
   const [manageOpen, setManageOpen] = useState(false)
-  const [editing, setEditing] = useState<RoleWithCount | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<RoleWithCount | null>(null)
+  const [editing, setEditing] = useState<Role | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Role | null>(null)
   const { getRoles, deleteRole } = useRole()
 
   const canCreate = can('role', 'create')
   const canUpdate = can('role', 'update')
   const canDelete = can('role', 'delete')
 
-  const columns: TableColumn<RoleWithCount>[] = [
+  const columns: TableColumn<Role>[] = [
     { key: 'serial', header: '#', width: '56px', render: (_r, i) => i + 1 },
     {
       key: 'name',
@@ -37,7 +37,7 @@ export default function RoleModule() {
     {
       key: 'permissions',
       header: 'Permissions',
-      render: (row) => (row.isSystem ? 'All' : row.permissionIds.length),
+      render: (row) => row.permissionCount,
     },
     { key: 'users', header: 'Users', render: (row) => row.userCount },
     {

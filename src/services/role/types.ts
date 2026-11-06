@@ -1,12 +1,15 @@
 export type Role = {
   id: string
   name: string
-  description: string
-  /** System roles (Admin) have full access and cannot be edited or deleted. */
+  description: string | null
+  /**
+   * Built-in role (e.g. Super Admin). This only protects it — it cannot be renamed, deleted or have its
+   * permissions edited. What a role can do always comes from its permissions.
+   */
   isSystem: boolean
-  permissionIds: string[]
+  status: 'ACTIVE' | 'INACTIVE'
+  userCount: number
+  permissionCount: number
 }
 
-export type RoleWithCount = Role & { userCount: number }
-
-export type RoleInput = Pick<Role, 'name' | 'description'>
+export type RoleInput = { name: string; description: string }

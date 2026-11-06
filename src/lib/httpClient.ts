@@ -106,7 +106,11 @@ export function createHttpClient(options: CreateHttpClientOptions = {}): HttpCli
     const data = isJson ? await res.json().catch(() => null) : await res.text()
 
     if (res.status === 401) {
-      if (!isRetry) {
+      // A 401 from login / refresh / logout means "wrong credentials" or "no session" — not an expired token —
+      // so don't try to refresh, and don't redirect (the login page shows the server's message instead).
+      const isAuthRoute = path.startsWith('/v1/auth/')
+
+      if (!isRetry && !isAuthRoute) {
         const refreshed = await refreshAccessToken()
         if (refreshed) {
           return request<T>(path, requestOptions, true)
@@ -114,7 +118,7 @@ export function createHttpClient(options: CreateHttpClientOptions = {}): HttpCli
       }
 
       const error = new ApiError(res.statusText || 'Unauthorized', 401, data)
-      onUnauthorized?.(error)
+      if (!isAuthRoute) onUnauthorized?.(error)
       throw error
     }
 

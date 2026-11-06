@@ -22,7 +22,6 @@ const SUBJECT_LABEL: Record<string, string> = {
   key_stat: 'Key Stats',
   gallery_image: 'Photo Gallery',
   site_settings: 'Site Settings',
-  inquiry: 'Inquiries',
   user: 'Users',
   role: 'Roles',
   role_permission: 'Role Permissions',

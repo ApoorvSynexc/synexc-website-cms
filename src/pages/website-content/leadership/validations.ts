@@ -1,11 +1,11 @@
 import Joi from 'joi'
-import { assetUrl } from '../shared'
+import type { Media } from '../../../services'
 
 export type TeamMemberFormValues = {
   name: string
   role: string
   bio: string
-  photo: string
+  photo: Media | null
   linkedin: string
   email: string
   isActive: boolean
@@ -25,7 +25,7 @@ export const teamMemberSchema = Joi.object<TeamMemberFormValues>({
     'string.min': 'Bio must be at least 20 characters',
     'string.max': 'Bio must be at most 300 characters',
   }),
-  photo: assetUrl,
+  photo: Joi.object().allow(null),
   linkedin: Joi.string()
     .trim()
     .pattern(/^https?:\/\/([a-z]{2,3}\.)?linkedin\.com\/\S+$/i)

@@ -1,3 +1,4 @@
+import type { Media } from '../media/types'
 import { createContentCollection } from '../website-content/collection'
 
 export type TeamMember = {
@@ -5,43 +6,32 @@ export type TeamMember = {
   name: string
   role: string
   bio: string
-  /** Optional photo: http(s) URL or a site path. Without one the site shows the initial. */
-  photo: string
+  photoId: string | null
+  /** Optional photo (an uploaded file). Without one the website shows the person's initial. */
+  photo: Media | null
   linkedin: string
   email: string
   isActive: boolean
 }
 
-// Seeded from the leadership list in the website's Leadership component.
-export const useLeadership = createContentCollection<TeamMember>('leadership', [
-  {
-    id: 'l1',
-    name: 'Rohit Sharma',
-    role: 'Founder & CEO',
-    bio: "Rohit leads Synexc's strategic direction, focusing on enterprise client relations and scaling our global operations with a technology-first approach.",
-    photo: '',
-    linkedin: '',
-    email: 'contact@synexc.com',
-    isActive: true,
-  },
-  {
-    id: 'l2',
-    name: 'Karan Verma',
-    role: 'Chief Technology Officer',
-    bio: 'Karan heads our engineering team, overseeing core architecture designs, custom software systems, and intelligent agentic AI integrations.',
-    photo: '',
-    linkedin: '',
-    email: 'contact@synexc.com',
-    isActive: true,
-  },
-  {
-    id: 'l3',
-    name: 'Anjali Gupta',
-    role: 'Head of Client Success',
-    bio: 'Anjali manages client onboarding and service delivery operations, ensuring our CRM configurations align with target business metrics.',
-    photo: '',
-    linkedin: '',
-    email: 'contact@synexc.com',
-    isActive: true,
-  },
-])
+export type TeamMemberInput = {
+  name: string
+  role: string
+  bio: string
+  photoId: string | null
+  linkedin: string
+  email: string
+  isActive: boolean
+}
+
+export const useLeadership = createContentCollection<TeamMember, TeamMemberInput>({
+  key: 'leadership',
+  path: 'team-member',
+  fromApi: ({ status, ...row }) =>
+    ({
+      ...row,
+      linkedin: (row.linkedin as string | null) ?? '',
+      email: (row.email as string | null) ?? '',
+      isActive: status === 'ACTIVE',
+    }) as unknown as TeamMember,
+})

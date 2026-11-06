@@ -1,3 +1,5 @@
+import type { Media } from '../media/types'
+
 export type UserStatus = 'ACTIVE' | 'INACTIVE'
 
 export type User = {
@@ -7,6 +9,8 @@ export type User = {
   roleId: string
   status: UserStatus
   createdAt: string
+  role?: { id: string; name: string; isSystem: boolean }
+  avatar?: Media | null
 }
 
 export type UserInput = {

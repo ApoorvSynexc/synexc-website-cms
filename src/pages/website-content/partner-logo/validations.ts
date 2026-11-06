@@ -1,9 +1,10 @@
 import Joi from 'joi'
-import { assetUrl, linkUrl } from '../shared'
+import type { Media } from '../../../services'
+import { linkUrl } from '../shared'
 
 export type PartnerLogoFormValues = {
   name: string
-  logo: string
+  logo: Media | null
   link: string
   placement: 'PARTNER' | 'CLIENT'
   isActive: boolean
@@ -14,10 +15,7 @@ export const partnerLogoSchema = Joi.object<PartnerLogoFormValues>({
     'string.empty': 'Name is required',
     'string.max': 'Name must be at most 80 characters',
   }),
-  logo: assetUrl.required().messages({
-    'string.empty': 'Logo is required',
-    'string.pattern.base': 'Enter an http(s) URL or a site path like /client-logo/name.png',
-  }),
+  logo: Joi.object().required().messages({ 'any.required': 'Logo is required', 'object.base': 'Logo is required' }),
   link: linkUrl,
   placement: Joi.string().valid('PARTNER', 'CLIENT').required(),
   isActive: Joi.boolean(),

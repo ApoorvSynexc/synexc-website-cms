@@ -1,10 +1,13 @@
+import type { Media } from '../media/types'
+
+/** The logged-in user, from GET /account/my-profile. */
 export type Profile = {
   id: string
   name: string
   email: string
-  role?: { name: string }
-  /** "<subject>:<action>" keys the user is allowed, e.g. "blog:create". */
+  roleId: string
+  role: { id: string; name: string; isSystem: boolean }
+  /** "<subject>:<action>" keys the user's role grants, e.g. "blog:create". */
   permissions: string[]
-  /** Avatar image. */
-  profile?: { url: string }
+  avatar: Media | null
 }

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { delay, newId } from '../../lib'
+import { useHttpClient } from '../../hooks/useHttpClient'
+import { dateOnly, toQuery, totalRecords } from '../../lib'
 import type { Announcement, AnnouncementInput, AnnouncementListParams } from './types'
 
 export { getAnnouncementState } from './types'
@@ -16,29 +17,39 @@ export const announcementKeys = {
   list: (params: AnnouncementListParams) => [...announcementKeys.all, 'list', params] as const,
 }
 
-// ---- Mock store (replace the bodies below with http calls once the API is ready) ----
-// Seeded from the popup currently hardcoded in the website (BharatDreaminPopup.tsx).
-let announcements: Announcement[] = [
-  {
-    id: 'an1',
-    badge: "Bharat Dreamin' 2026",
-    title: "Meet Team Synexc at Bharat Dreamin'",
-    message: "We're bringing 15 members and a speaker to India's biggest Salesforce event.",
-    type: 'POPUP',
-    eventDate: '2026-07-11',
-    venue: 'RIC, Jaipur, Rajasthan',
-    ctaLabel: 'See You at Jaipur',
-    ctaUrl:
-      'https://blogs.synexc.com/synexc-at-bharat-dreamin-2026-exploring-zero-click-salesforce-with-autonomous-agents/',
-    image: '',
-    startDate: '2026-05-01',
-    endDate: '2026-07-11',
-    isActive: true,
-    createdAt: '2026-05-01T00:00:00.000Z',
-  },
-]
+/** What the API returns: optional text columns are null and dates are ISO timestamps; the on/off switch is `status`. */
+type ApiAnnouncement = Omit<Announcement, 'isActive' | 'badge' | 'venue' | 'ctaLabel' | 'ctaUrl' | 'eventDate'> & {
+  status: 'ACTIVE' | 'INACTIVE' | 'DELETED'
+  badge: string | null
+  venue: string | null
+  ctaLabel: string | null
+  ctaUrl: string | null
+  eventDate: string | null
+}
+
+const fromApi = (a: ApiAnnouncement): Announcement => {
+  const { status, ...rest } = a
+  return {
+    ...rest,
+    badge: a.badge ?? '',
+    venue: a.venue ?? '',
+    ctaLabel: a.ctaLabel ?? '',
+    ctaUrl: a.ctaUrl ?? '',
+    eventDate: dateOnly(a.eventDate),
+    startDate: dateOnly(a.startDate),
+    endDate: dateOnly(a.endDate),
+    isActive: status === 'ACTIVE',
+  }
+}
+
+/** The page works with `isActive`; the API stores it as the row status. Only the keys given are sent. */
+const toApi = ({ isActive, ...rest }: Partial<AnnouncementInput>) => ({
+  ...rest,
+  ...(isActive !== undefined && { status: isActive ? 'ACTIVE' : 'INACTIVE' }),
+})
 
 export function useAnnouncement(options: { listParams?: AnnouncementListParams } = {}) {
+  const http = useHttpClient()
   const queryClient = useQueryClient()
   const invalidate = () => queryClient.invalidateQueries({ queryKey: announcementKeys.all })
   const { listParams } = options
@@ -47,41 +58,25 @@ export function useAnnouncement(options: { listParams?: AnnouncementListParams }
     queryKey: announcementKeys.list(listParams ?? { page: 1, limit: 10 }),
     enabled: Boolean(listParams),
     queryFn: async () => {
-      await delay(250)
       const { page, limit, search, type } = listParams!
-      const q = search?.trim().toLowerCase()
-      const filtered = announcements
-        .filter((a) => !q || a.title.toLowerCase().includes(q) || a.badge.toLowerCase().includes(q))
-        .filter((a) => !type || a.type === type)
-        .sort((a, b) => b.startDate.localeCompare(a.startDate))
-      return {
-        announcements: filtered.slice((page - 1) * limit, page * limit),
-        meta: { totalRecords: filtered.length },
-      }
+      const res = await http.get<ApiAnnouncement[]>(`/v1/announcement/list${toQuery({ page, limit, search, type })}`)
+      return { announcements: res.data.map(fromApi), meta: { totalRecords: totalRecords(res.meta) } }
     },
   })
 
   const createAnnouncement = useMutation({
-    mutationFn: async (input: AnnouncementInput) => {
-      await delay()
-      announcements = [{ id: newId(), createdAt: new Date().toISOString(), ...input }, ...announcements]
-    },
+    mutationFn: (input: AnnouncementInput) => http.post<ApiAnnouncement>('/v1/announcement', toApi(input)),
     onSuccess: invalidate,
   })
 
   const updateAnnouncement = useMutation({
-    mutationFn: async ({ id, ...input }: Partial<AnnouncementInput> & { id: string }) => {
-      await delay()
-      announcements = announcements.map((a) => (a.id === id ? { ...a, ...input } : a))
-    },
+    mutationFn: ({ id, ...input }: Partial<AnnouncementInput> & { id: string }) =>
+      http.put<ApiAnnouncement>('/v1/announcement', { id, ...toApi(input) }),
     onSuccess: invalidate,
   })
 
   const deleteAnnouncement = useMutation({
-    mutationFn: async (id: string) => {
-      await delay()
-      announcements = announcements.filter((a) => a.id !== id)
-    },
+    mutationFn: (id: string) => http.delete<null>(`/v1/announcement${toQuery({ id })}`),
     onSuccess: invalidate,
   })
 

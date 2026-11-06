@@ -1,11 +1,11 @@
-import { useHeroSlide, type HeroSlide } from '../../../services'
+import { useHeroSlide, type HeroSlide, type HeroSlideInput } from '../../../services'
 import { ContentList } from '../ContentList'
-import { Thumb } from '../shared'
+import { mediaSrc, Thumb } from '../shared'
 import ManageHeroSlideModal from './manage'
 
 export default function HeroSlideModule() {
   return (
-    <ContentList<HeroSlide>
+    <ContentList<HeroSlide, HeroSlideInput>
       subject="hero_slide"
       title="Hero Slides"
       description="The rotating banner at the top of the home page."
@@ -20,7 +20,7 @@ export default function HeroSlideModule() {
           header: 'Slide',
           render: (row) => (
             <div className="flex items-center gap-3">
-              <Thumb src={row.image} wide />
+              <Thumb src={mediaSrc(row.image)} wide />
               <div className="min-w-0">
                 <div className="max-w-xs truncate font-medium text-heading">{row.title}</div>
                 <div className="max-w-xs truncate text-xs text-body">{row.category}</div>

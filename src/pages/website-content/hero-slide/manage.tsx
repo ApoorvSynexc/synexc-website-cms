@@ -1,21 +1,40 @@
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { joiResolver } from '@hookform/resolvers/joi'
-import { Button, Modal, TextField, ToggleButton, Typography } from '../../../components'
+import { Button, Modal, TextField, ToggleButton, Typography, ImageUpload } from '../../../components'
 import { getErrorMessage } from '../../../lib'
-import { useHeroSlide, type HeroSlide } from '../../../services'
+import { useHeroSlide, type HeroSlide, type HeroSlideInput } from '../../../services'
 import type { ManageModalProps } from '../ContentList'
-import { ImagePreview } from '../shared'
 import { heroSlideSchema, type HeroSlideFormValues } from './validations'
 
 const empty = (): HeroSlideFormValues => ({
   category: '',
   title: '',
   description: '',
-  image: '',
-  logo: '',
+  image: null,
+  logo: null,
   link: '',
   isActive: true,
+})
+
+const toFormValues = (item: HeroSlide): HeroSlideFormValues => ({
+  category: item.category,
+  title: item.title,
+  description: item.description,
+  image: item.image,
+  logo: item.logo,
+  link: item.link,
+  isActive: item.isActive,
+})
+
+const toPayload = (v: HeroSlideFormValues): HeroSlideInput => ({
+  category: v.category,
+  title: v.title,
+  description: v.description,
+  imageId: v.image?.id ?? '',
+  logoId: v.logo?.id ?? null,
+  link: v.link,
+  isActive: v.isActive,
 })
 
 export default function ManageHeroSlideModal({ open, onClose, item }: ManageModalProps<HeroSlide>) {
@@ -34,18 +53,16 @@ export default function ManageHeroSlideModal({ open, onClose, item }: ManageModa
 
   useEffect(() => {
     if (!open) return
-    reset(item ? { ...item } : empty())
+    reset(item ? toFormValues(item) : empty())
     mutation.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, item])
 
-  const image = watch('image')
-  const logo = watch('logo')
   const descLength = watch('description')?.length ?? 0
 
   const onSubmit = (values: HeroSlideFormValues) => {
-    if (isEdit && item) updateItem.mutate({ id: item.id, ...values }, { onSuccess: onClose })
-    else createItem.mutate(values, { onSuccess: onClose })
+    if (isEdit && item) updateItem.mutate({ id: item.id, ...toPayload(values) }, { onSuccess: onClose })
+    else createItem.mutate(toPayload(values), { onSuccess: onClose })
   }
 
   return (
@@ -96,26 +113,32 @@ export default function ManageHeroSlideModal({ open, onClose, item }: ManageModa
           </div>
         </div>
 
-        <div>
-          <TextField
-            label="Banner image"
-            placeholder="https://… or /banners/banner-crm.jpg"
-            required
-            error={errors.image?.message}
-            {...register('image')}
-          />
-          {!errors.image && <ImagePreview src={image} />}
-        </div>
+        <Controller
+          name="image"
+          control={control}
+          render={({ field }) => (
+            <ImageUpload
+              label="Banner image"
+              required
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.image?.message as string | undefined}
+            />
+          )}
+        />
 
-        <div>
-          <TextField
-            label="Partner logo (optional)"
-            placeholder="https://… or /client-logo/logo.png"
-            error={errors.logo?.message}
-            {...register('logo')}
-          />
-          {!errors.logo && <ImagePreview src={logo} />}
-        </div>
+        <Controller
+          name="logo"
+          control={control}
+          render={({ field }) => (
+            <ImageUpload
+              label="Partner logo (optional)"
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.logo?.message as string | undefined}
+            />
+          )}
+        />
 
         <TextField
           label="Link (optional)"

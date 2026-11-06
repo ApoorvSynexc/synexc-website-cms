@@ -1,21 +1,38 @@
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { joiResolver } from '@hookform/resolvers/joi'
-import { Button, Modal, TextField, ToggleButton, Typography } from '../../../components'
+import { Button, Modal, TextField, ToggleButton, Typography, ImageUpload } from '../../../components'
 import { getErrorMessage } from '../../../lib'
 import { TESTIMONIAL_PAGES, useTestimonial } from '../../../services'
-import type { Testimonial } from '../../../services'
+import type { Testimonial, TestimonialInput } from '../../../services'
 import type { ManageModalProps } from '../ContentList'
-import { ImagePreview } from '../shared'
 import { testimonialSchema, type TestimonialFormValues } from './validations'
 
 const empty = (): TestimonialFormValues => ({
   name: '',
   role: '',
   message: '',
-  avatar: '',
+  avatar: null,
   pages: [],
   isActive: true,
+})
+
+const toFormValues = (item: Testimonial): TestimonialFormValues => ({
+  name: item.name,
+  role: item.role,
+  message: item.message,
+  avatar: item.avatar,
+  pages: item.pages,
+  isActive: item.isActive,
+})
+
+const toPayload = (v: TestimonialFormValues): TestimonialInput => ({
+  name: v.name,
+  role: v.role,
+  message: v.message,
+  avatarId: v.avatar?.id ?? null,
+  pages: v.pages,
+  isActive: v.isActive,
 })
 
 export default function ManageTestimonialModal({ open, onClose, item }: ManageModalProps<Testimonial>) {
@@ -34,17 +51,16 @@ export default function ManageTestimonialModal({ open, onClose, item }: ManageMo
 
   useEffect(() => {
     if (!open) return
-    reset(item ? { ...item } : empty())
+    reset(item ? toFormValues(item) : empty())
     mutation.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, item])
 
-  const avatar = watch('avatar')
   const messageLength = watch('message')?.length ?? 0
 
   const onSubmit = (values: TestimonialFormValues) => {
-    if (isEdit && item) updateItem.mutate({ id: item.id, ...values }, { onSuccess: onClose })
-    else createItem.mutate(values, { onSuccess: onClose })
+    if (isEdit && item) updateItem.mutate({ id: item.id, ...toPayload(values) }, { onSuccess: onClose })
+    else createItem.mutate(toPayload(values), { onSuccess: onClose })
   }
 
   return (
@@ -98,15 +114,18 @@ export default function ManageTestimonialModal({ open, onClose, item }: ManageMo
           </div>
         </div>
 
-        <div>
-          <TextField
-            label="Client logo / photo"
-            placeholder="https://… or /client-logo/name.png"
-            error={errors.avatar?.message}
-            {...register('avatar')}
-          />
-          {!errors.avatar && <ImagePreview src={avatar} />}
-        </div>
+        <Controller
+          name="avatar"
+          control={control}
+          render={({ field }) => (
+            <ImageUpload
+              label="Client logo / photo (optional)"
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.avatar?.message as string | undefined}
+            />
+          )}
+        />
 
         <Controller
           name="pages"

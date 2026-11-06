@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
   const categoryData = [...(stats?.byCategory ?? [])]
     .sort((a, b) => b.count - a.count)
-    .map((c) => ({ name: categoryName(c.categoryId), count: c.count }))
+    .map((c) => ({ name: c.name, count: c.count }))
 
   return (
     <div className="flex flex-col gap-4">
@@ -272,12 +272,12 @@ function BlogList({
           {showStatus && (
             <span
               className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                b.status === 'PUBLISHED'
+                b.publishStatus === 'PUBLISHED'
                   ? 'bg-emerald-500/10 text-emerald-600'
                   : 'bg-amber-500/10 text-amber-600'
               }`}
             >
-              {b.status === 'PUBLISHED' ? 'Published' : 'Draft'}
+              {b.publishStatus === 'PUBLISHED' ? 'Published' : 'Draft'}
             </span>
           )}
         </li>

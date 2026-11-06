@@ -1,11 +1,11 @@
 import Joi from 'joi'
-import { assetUrl } from '../shared'
+import type { Media } from '../../../services'
 
 export type TestimonialFormValues = {
   name: string
   role: string
   message: string
-  avatar: string
+  avatar: Media | null
   pages: string[]
   isActive: boolean
 }
@@ -24,7 +24,7 @@ export const testimonialSchema = Joi.object<TestimonialFormValues>({
     'string.min': 'Testimonial must be at least 20 characters',
     'string.max': 'Testimonial must be at most 500 characters',
   }),
-  avatar: assetUrl,
+  avatar: Joi.object().allow(null),
   pages: Joi.array().items(Joi.string()).min(1).required().messages({
     'array.min': 'Pick at least one page',
   }),

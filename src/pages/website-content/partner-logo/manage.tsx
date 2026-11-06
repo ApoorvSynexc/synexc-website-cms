@@ -1,11 +1,10 @@
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { joiResolver } from '@hookform/resolvers/joi'
-import { Button, Dropdown, Modal, TextField, ToggleButton, Typography } from '../../../components'
+import { Button, Dropdown, Modal, TextField, ToggleButton, Typography, ImageUpload } from '../../../components'
 import { getErrorMessage } from '../../../lib'
-import { usePartnerLogo, type PartnerLogo } from '../../../services'
+import { usePartnerLogo, type PartnerLogo, type PartnerLogoInput } from '../../../services'
 import type { ManageModalProps } from '../ContentList'
-import { ImagePreview } from '../shared'
 import { partnerLogoSchema, type PartnerLogoFormValues } from './validations'
 
 const PLACEMENT_OPTIONS = [
@@ -15,10 +14,26 @@ const PLACEMENT_OPTIONS = [
 
 const empty = (): PartnerLogoFormValues => ({
   name: '',
-  logo: '',
+  logo: null,
   link: '',
   placement: 'PARTNER',
   isActive: true,
+})
+
+const toFormValues = (item: PartnerLogo): PartnerLogoFormValues => ({
+  name: item.name,
+  logo: item.logo,
+  link: item.link,
+  placement: item.placement,
+  isActive: item.isActive,
+})
+
+const toPayload = (v: PartnerLogoFormValues): PartnerLogoInput => ({
+  name: v.name,
+  logoId: v.logo?.id ?? '',
+  link: v.link,
+  placement: v.placement,
+  isActive: v.isActive,
 })
 
 export default function ManagePartnerLogoModal({ open, onClose, item }: ManageModalProps<PartnerLogo>) {
@@ -31,22 +46,19 @@ export default function ManagePartnerLogoModal({ open, onClose, item }: ManageMo
     control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm<PartnerLogoFormValues>({ defaultValues: empty(), resolver: joiResolver(partnerLogoSchema) })
 
   useEffect(() => {
     if (!open) return
-    reset(item ? { ...item } : empty())
+    reset(item ? toFormValues(item) : empty())
     mutation.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, item])
 
-  const logo = watch('logo')
-
   const onSubmit = (values: PartnerLogoFormValues) => {
-    if (isEdit && item) updateItem.mutate({ id: item.id, ...values }, { onSuccess: onClose })
-    else createItem.mutate(values, { onSuccess: onClose })
+    if (isEdit && item) updateItem.mutate({ id: item.id, ...toPayload(values) }, { onSuccess: onClose })
+    else createItem.mutate(toPayload(values), { onSuccess: onClose })
   }
 
   return (
@@ -74,16 +86,19 @@ export default function ManagePartnerLogoModal({ open, onClose, item }: ManageMo
 
         <TextField label="Name" placeholder="e.g. Salesforce" required error={errors.name?.message} {...register('name')} />
 
-        <div>
-          <TextField
-            label="Logo"
-            placeholder="https://… or /client-logo/name.png"
-            required
-            error={errors.logo?.message}
-            {...register('logo')}
-          />
-          {!errors.logo && <ImagePreview src={logo} />}
-        </div>
+        <Controller
+          name="logo"
+          control={control}
+          render={({ field }) => (
+            <ImageUpload
+              label="Logo"
+              required
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.logo?.message as string | undefined}
+            />
+          )}
+        />
 
         <TextField
           label="Link (optional)"

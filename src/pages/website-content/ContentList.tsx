@@ -20,14 +20,14 @@ export type ManageModalProps<T> = {
   item: T | null
 }
 
-type ContentListProps<T extends ContentItem> = {
+type ContentListProps<T extends ContentItem, I extends { isActive: boolean }> = {
   /** Permission subject, e.g. "testimonial" (read/create/update/delete). */
   subject: string
   title: string
   description: string
   addLabel: string
   emptyMessage: string
-  useCollection: ContentCollectionHook<T>
+  useCollection: ContentCollectionHook<T, I>
   /** Columns between "#" and the Active / Actions columns. */
   columns: TableColumn<T>[]
   itemName: (item: T) => string
@@ -39,7 +39,7 @@ type ContentListProps<T extends ContentItem> = {
 }
 
 /** Shared list screen for the ordered website lists: reorder, toggle, edit, delete. */
-export function ContentList<T extends ContentItem>({
+export function ContentList<T extends ContentItem, I extends { isActive: boolean } = Omit<T, 'id'>>({
   subject,
   title,
   description,
@@ -51,7 +51,7 @@ export function ContentList<T extends ContentItem>({
   Manage,
   reorderable = true,
   toggleable = true,
-}: ContentListProps<T>) {
+}: ContentListProps<T, I>) {
   const { can } = useSession()
   const { getItems, updateItem, deleteItem, moveItem } = useCollection()
   const [manageOpen, setManageOpen] = useState(false)
@@ -67,7 +67,7 @@ export function ContentList<T extends ContentItem>({
   const toggleActive = (item: T) => {
     setBusyId(item.id)
     updateItem.mutate(
-      { id: item.id, isActive: !item.isActive } as unknown as Partial<Omit<T, 'id'>> & { id: string },
+      { id: item.id, isActive: !item.isActive } as unknown as Partial<I> & { id: string },
       { onSettled: () => setBusyId(null) },
     )
   }

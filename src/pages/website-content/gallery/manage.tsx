@@ -1,16 +1,29 @@
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { joiResolver } from '@hookform/resolvers/joi'
-import { Button, Dropdown, Modal, TextField, ToggleButton, Typography } from '../../../components'
+import { Button, Dropdown, Modal, TextField, ToggleButton, Typography, ImageUpload } from '../../../components'
 import { getErrorMessage } from '../../../lib'
-import { GALLERY_ALBUMS, useGallery, type GalleryImage } from '../../../services'
+import { GALLERY_ALBUMS, useGallery, type GalleryImage, type GalleryImageInput } from '../../../services'
 import type { ManageModalProps } from '../ContentList'
-import { ImagePreview } from '../shared'
 import { gallerySchema, type GalleryFormValues } from './validations'
 
 const ALBUM_OPTIONS = GALLERY_ALBUMS.map((a) => ({ label: a, value: a }))
 
-const empty = (): GalleryFormValues => ({ image: '', caption: '', album: '', isActive: true })
+const empty = (): GalleryFormValues => ({ image: null, caption: '', album: '', isActive: true })
+
+const toFormValues = (item: GalleryImage): GalleryFormValues => ({
+  image: item.image,
+  caption: item.caption,
+  album: item.album,
+  isActive: item.isActive,
+})
+
+const toPayload = (v: GalleryFormValues): GalleryImageInput => ({
+  imageId: v.image?.id ?? '',
+  caption: v.caption,
+  album: v.album,
+  isActive: v.isActive,
+})
 
 export default function ManageGalleryModal({ open, onClose, item }: ManageModalProps<GalleryImage>) {
   const isEdit = Boolean(item)
@@ -22,22 +35,19 @@ export default function ManageGalleryModal({ open, onClose, item }: ManageModalP
     control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm<GalleryFormValues>({ defaultValues: empty(), resolver: joiResolver(gallerySchema) })
 
   useEffect(() => {
     if (!open) return
-    reset(item ? { ...item } : empty())
+    reset(item ? toFormValues(item) : empty())
     mutation.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, item])
 
-  const image = watch('image')
-
   const onSubmit = (values: GalleryFormValues) => {
-    if (isEdit && item) updateItem.mutate({ id: item.id, ...values }, { onSuccess: onClose })
-    else createItem.mutate(values, { onSuccess: onClose })
+    if (isEdit && item) updateItem.mutate({ id: item.id, ...toPayload(values) }, { onSuccess: onClose })
+    else createItem.mutate(toPayload(values), { onSuccess: onClose })
   }
 
   return (
@@ -63,17 +73,19 @@ export default function ManageGalleryModal({ open, onClose, item }: ManageModalP
           </Typography>
         )}
 
-        <div>
-          <TextField
-            label="Photo"
-            placeholder="https://… or /about1.png"
-            required
-            helperText="Photo upload arrives with the API; for now paste a URL or site path."
-            error={errors.image?.message}
-            {...register('image')}
-          />
-          {!errors.image && <ImagePreview src={image} />}
-        </div>
+        <Controller
+          name="image"
+          control={control}
+          render={({ field }) => (
+            <ImageUpload
+              label="Photo"
+              required
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.image?.message as string | undefined}
+            />
+          )}
+        />
 
         <Controller
           name="album"

@@ -1,13 +1,13 @@
-import { TESTIMONIAL_PAGES, useTestimonial, type Testimonial } from '../../../services'
+import { TESTIMONIAL_PAGES, useTestimonial, type Testimonial, type TestimonialInput } from '../../../services'
 import { ContentList } from '../ContentList'
-import { Thumb } from '../shared'
+import { mediaSrc, Thumb } from '../shared'
 import ManageTestimonialModal from './manage'
 
 const pageLabel = (value: string) => TESTIMONIAL_PAGES.find((p) => p.value === value)?.label ?? value
 
 export default function TestimonialModule() {
   return (
-    <ContentList<Testimonial>
+    <ContentList<Testimonial, TestimonialInput>
       subject="testimonial"
       title="Testimonials"
       description="Client quotes shown on the home, about, culture, case study and industry pages."
@@ -22,7 +22,7 @@ export default function TestimonialModule() {
           header: 'Client',
           render: (row) => (
             <div className="flex items-center gap-3">
-              <Thumb src={row.avatar} />
+              <Thumb src={mediaSrc(row.avatar)} />
               <div className="min-w-0">
                 <div className="truncate font-medium text-heading">{row.name}</div>
                 <div className="truncate text-xs text-body">{row.role}</div>

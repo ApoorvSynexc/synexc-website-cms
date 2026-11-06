@@ -6,7 +6,7 @@ import { FiEye, FiEyeOff, FiLock, FiMail } from 'react-icons/fi'
 import { Button, TextField, Typography } from '../../../components'
 import { PalettePicker, ThemeToggle } from '../../../theme'
 import microsoftLogo from '../../../assets/svg/microsoft-logo.svg'
-import { ApiError } from '../../../lib'
+import { getErrorMessage } from '../../../lib'
 import { useAuth } from '../../../services'
 import { loginSchema, type LoginFormValues } from './validations'
 
@@ -57,9 +57,7 @@ export default function Login() {
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
             {login.isError && (
               <Typography variant="body-sm" className="text-red-600">
-                {login.error instanceof ApiError
-                  ? login.error.message
-                  : 'Something went wrong. Please try again.'}
+                {getErrorMessage(login.error)}
               </Typography>
             )}
 

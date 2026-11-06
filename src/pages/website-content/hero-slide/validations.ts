@@ -1,12 +1,13 @@
 import Joi from 'joi'
-import { assetUrl, linkUrl } from '../shared'
+import type { Media } from '../../../services'
+import { linkUrl } from '../shared'
 
 export type HeroSlideFormValues = {
   category: string
   title: string
   description: string
-  image: string
-  logo: string
+  image: Media | null
+  logo: Media | null
   link: string
   isActive: boolean
 }
@@ -24,11 +25,8 @@ export const heroSlideSchema = Joi.object<HeroSlideFormValues>({
     'string.empty': 'Description is required',
     'string.max': 'Description must be at most 200 characters',
   }),
-  image: assetUrl.required().messages({
-    'string.empty': 'Banner image is required',
-    'string.pattern.base': 'Enter an http(s) URL or a site path like /banners/banner.jpg',
-  }),
-  logo: assetUrl,
+  image: Joi.object().required().messages({ 'any.required': 'Banner image is required', 'object.base': 'Banner image is required' }),
+  logo: Joi.object().allow(null),
   link: linkUrl,
   isActive: Joi.boolean(),
 })

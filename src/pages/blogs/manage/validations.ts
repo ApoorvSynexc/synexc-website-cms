@@ -1,5 +1,5 @@
 import Joi from 'joi'
-import type { BlogStatus } from '../../../services'
+import type { BlogStatus, Media } from '../../../services'
 
 export type BlogFormValues = {
   title: string
@@ -8,8 +8,9 @@ export type BlogFormValues = {
   content: string
   categoryId: string
   author: string
-  featuredImage: string
-  status: BlogStatus
+  /** The uploaded cover image (its id is what gets saved), or null. */
+  featuredImage: Media | null
+  publishStatus: BlogStatus
   publishedAt: string
 }
 
@@ -52,15 +53,8 @@ export const blogSchema = Joi.object<BlogFormValues>({
     'string.empty': 'Author is required',
     'string.max': 'Author must be at most 80 characters',
   }),
-  featuredImage: Joi.string()
-    .trim()
-    .uri({ scheme: ['http', 'https'] })
-    .allow('')
-    .messages({
-      'string.uri': 'Enter a valid http(s) image URL',
-      'string.uriCustomScheme': 'Enter a valid image URL starting with https://',
-    }),
-  status: Joi.string().valid('PUBLISHED', 'DRAFT').required(),
+  featuredImage: Joi.object().allow(null).messages({ 'object.base': 'Upload a valid image' }),
+  publishStatus: Joi.string().valid('PUBLISHED', 'DRAFT').required(),
   publishedAt: Joi.string()
     .pattern(/^\d{4}-\d{2}-\d{2}$/)
     .required()

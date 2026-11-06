@@ -1,18 +1,18 @@
-import { useGallery, type GalleryImage } from '../../../services'
+import { useGallery, type GalleryImage, type GalleryImageInput } from '../../../services'
 import { ContentList } from '../ContentList'
-import { Thumb } from '../shared'
+import { mediaSrc, Thumb } from '../shared'
 import ManageGalleryModal from './manage'
 
 export default function GalleryModule() {
   return (
-    <ContentList<GalleryImage>
+    <ContentList<GalleryImage, GalleryImageInput>
       subject="gallery_image"
       title="Photo Gallery"
       description="Photos from “Life at Synexc” and event albums on the About page."
       addLabel="Add Photo"
       emptyMessage="No photos added yet."
       useCollection={useGallery}
-      itemName={(g) => g.caption || g.image.split('/').pop() || 'photo'}
+      itemName={(g) => g.caption || g.image.name}
       Manage={ManageGalleryModal}
       columns={[
         {
@@ -20,10 +20,10 @@ export default function GalleryModule() {
           header: 'Photo',
           render: (row) => (
             <div className="flex items-center gap-3">
-              <Thumb src={row.image} wide />
+              <Thumb src={mediaSrc(row.image)} wide />
               <div className="min-w-0">
                 <div className="truncate text-heading">{row.caption || '—'}</div>
-                <div className="max-w-xs truncate text-xs text-body">{row.image}</div>
+                <div className="max-w-xs truncate text-xs text-body">{row.image.name}</div>
               </div>
             </div>
           ),

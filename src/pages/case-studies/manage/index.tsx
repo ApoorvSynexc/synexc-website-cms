@@ -6,6 +6,7 @@ import { FiPlus, FiTrash2 } from 'react-icons/fi'
 import {
   Button,
   Dropdown,
+  ImageUpload,
   Modal,
   RichTextEditor,
   TagInput,
@@ -37,13 +38,29 @@ const emptyValues = (): CaseStudyFormValues => ({
   client: '',
   category: '',
   description: '',
-  image: '',
+  image: null,
   content: '',
   tags: [],
   results: [],
   readTime: '5 min read',
-  status: 'DRAFT',
+  publishStatus: 'DRAFT',
   publishedAt: dayjs().format('YYYY-MM-DD'),
+})
+
+/** Only the fields the form edits (the API row also has id, imageId, createdAt …). */
+const toFormValues = (study: CaseStudy): CaseStudyFormValues => ({
+  title: study.title,
+  slug: study.slug,
+  client: study.client,
+  category: study.category,
+  description: study.description,
+  image: study.image,
+  content: study.content,
+  tags: study.tags,
+  results: study.results,
+  readTime: study.readTime,
+  publishStatus: study.publishStatus,
+  publishedAt: study.publishedAt,
 })
 
 const textareaClass =
@@ -70,12 +87,11 @@ export default function ManageCaseStudyModal({ open, onClose, caseStudy }: Props
 
   useEffect(() => {
     if (!open) return
-    reset(caseStudy ? { ...caseStudy } : emptyValues())
+    reset(caseStudy ? toFormValues(caseStudy) : emptyValues())
     mutation.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, caseStudy])
 
-  const image = watch('image')
   const descriptionLength = watch('description')?.length ?? 0
 
   const titleField = register('title', {
@@ -84,12 +100,13 @@ export default function ManageCaseStudyModal({ open, onClose, caseStudy }: Props
     },
   })
 
-  const onSubmit = (values: CaseStudyFormValues) => {
+  const onSubmit = ({ image, ...values }: CaseStudyFormValues) => {
+    // Files are saved by id: the picker already uploaded the image, so only its id goes with the study.
     const payload = {
       ...values,
       title: values.title.trim(),
       client: values.client.trim(),
-      image: values.image.trim(),
+      imageId: image?.id ?? null,
     }
     if (isEdit && caseStudy) {
       updateCaseStudy.mutate({ id: caseStudy.id, ...payload }, { onSuccess: onClose })
@@ -175,18 +192,19 @@ export default function ManageCaseStudyModal({ open, onClose, caseStudy }: Props
           </div>
         </div>
 
-        <div>
-          <TextField label="Cover image URL" placeholder="https://..." error={errors.image?.message} {...register('image')} />
-          {image && !errors.image && (
-            <img
-              src={image}
-              alt="Cover preview"
-              className="mt-2 h-32 w-full rounded-lg border border-border object-cover"
-              onError={(e) => (e.currentTarget.style.display = 'none')}
-              onLoad={(e) => (e.currentTarget.style.display = 'block')}
+        <Controller
+          name="image"
+          control={control}
+          render={({ field }) => (
+            <ImageUpload
+              label="Cover image"
+              value={field.value}
+              onChange={field.onChange}
+              helperText="Shown on the case study card and at the top of the page."
+              error={errors.image?.message}
             />
           )}
-        </div>
+        />
 
         <Controller
           name="tags"
@@ -286,7 +304,7 @@ export default function ManageCaseStudyModal({ open, onClose, caseStudy }: Props
             {...register('readTime')}
           />
           <Controller
-            name="status"
+            name="publishStatus"
             control={control}
             render={({ field }) => (
               <Dropdown label="Status" required options={STATUS_OPTIONS} value={field.value} onChange={field.onChange} />

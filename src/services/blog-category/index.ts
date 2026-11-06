@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { delay, mockError, newId } from '../../lib'
+import { useHttpClient } from '../../hooks/useHttpClient'
+import { toQuery } from '../../lib'
 import type { BlogCategory, BlogCategoryInput } from './types'
 
 export type { BlogCategory, BlogCategoryInput } from './types'
@@ -8,59 +9,30 @@ export const blogCategoryKeys = {
   all: ['blog-categories'] as const,
 }
 
-// ---- Mock store (replace the bodies below with http calls once the API is ready) ----
-let categories: BlogCategory[] = [
-  { id: 'c1', name: 'AI & Gaming', slug: 'ai-gaming' },
-  { id: 'c2', name: 'CRM & Salesforce', slug: 'crm-salesforce' },
-  { id: 'c3', name: 'Cloud', slug: 'cloud' },
-  { id: 'c4', name: 'Zoho', slug: 'zoho' },
-  { id: 'c5', name: 'Digital Transformation', slug: 'digital-transformation' },
-]
-
-const assertUnique = (input: BlogCategoryInput, ignoreId?: string) => {
-  const dup = categories.find(
-    (c) =>
-      c.id !== ignoreId &&
-      (c.slug === input.slug || c.name.toLowerCase() === input.name.toLowerCase()),
-  )
-  if (dup) throw mockError('A category with this name or slug already exists', 409)
-}
-
 export function useBlogCategory() {
+  const http = useHttpClient()
   const queryClient = useQueryClient()
   const invalidate = () => queryClient.invalidateQueries({ queryKey: blogCategoryKeys.all })
 
+  /** Not paginated — categories are few and the blog form needs all of them. */
   const getCategories = useQuery({
     queryKey: blogCategoryKeys.all,
-    queryFn: async () => {
-      await delay(250)
-      return [...categories]
-    },
+    queryFn: async () => (await http.get<BlogCategory[]>('/v1/blog-category/list')).data,
   })
 
   const createCategory = useMutation({
-    mutationFn: async (input: BlogCategoryInput) => {
-      await delay()
-      assertUnique(input)
-      categories = [...categories, { id: newId(), ...input }]
-    },
+    mutationFn: (input: BlogCategoryInput) => http.post<BlogCategory>('/v1/blog-category', input),
     onSuccess: invalidate,
   })
 
   const updateCategory = useMutation({
-    mutationFn: async ({ id, ...input }: BlogCategoryInput & { id: string }) => {
-      await delay()
-      assertUnique(input, id)
-      categories = categories.map((c) => (c.id === id ? { id, ...input } : c))
-    },
+    mutationFn: ({ id, ...input }: BlogCategoryInput & { id: string }) =>
+      http.put<BlogCategory>('/v1/blog-category', { id, ...input }),
     onSuccess: invalidate,
   })
 
   const deleteCategory = useMutation({
-    mutationFn: async (id: string) => {
-      await delay()
-      categories = categories.filter((c) => c.id !== id)
-    },
+    mutationFn: (id: string) => http.delete<null>(`/v1/blog-category${toQuery({ id })}`),
     onSuccess: invalidate,
   })
 

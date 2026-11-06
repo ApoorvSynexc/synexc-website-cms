@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { joiResolver } from '@hookform/resolvers/joi'
 import dayjs from 'dayjs'
-import { Button, Dropdown, Modal, RichTextEditor, TextField, Typography } from '../../../components'
+import { Button, Dropdown, ImageUpload, Modal, RichTextEditor, TextField, Typography } from '../../../components'
 import { getErrorMessage } from '../../../lib'
 import { useBlog, useBlogCategory, type Blog } from '../../../services'
 import { slugify } from '../../../utils/helper'
@@ -27,9 +27,22 @@ const emptyValues = (): BlogFormValues => ({
   content: '',
   categoryId: '',
   author: '',
-  featuredImage: '',
-  status: 'DRAFT',
+  featuredImage: null,
+  publishStatus: 'DRAFT',
   publishedAt: dayjs().format('YYYY-MM-DD'),
+})
+
+/** Only the fields the form edits (the API row also has id, category, createdAt …). */
+const toFormValues = (blog: Blog): BlogFormValues => ({
+  title: blog.title,
+  slug: blog.slug,
+  excerpt: blog.excerpt,
+  content: blog.content,
+  categoryId: blog.categoryId,
+  author: blog.author,
+  featuredImage: blog.featuredImage,
+  publishStatus: blog.publishStatus,
+  publishedAt: blog.publishedAt,
 })
 
 const textareaClass =
@@ -56,12 +69,11 @@ export default function ManageBlogModal({ open, onClose, blog }: ManageBlogModal
 
   useEffect(() => {
     if (!open) return
-    reset(blog ? { ...blog } : emptyValues())
+    reset(blog ? toFormValues(blog) : emptyValues())
     mutation.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, blog])
 
-  const featuredImage = watch('featuredImage')
   const excerptLength = watch('excerpt')?.length ?? 0
 
   const categoryOptions = (getCategories.data ?? []).map((c) => ({ label: c.name, value: c.id }))
@@ -73,12 +85,9 @@ export default function ManageBlogModal({ open, onClose, blog }: ManageBlogModal
     },
   })
 
-  const onSubmit = (values: BlogFormValues) => {
-    const payload = {
-      ...values,
-      title: values.title.trim(),
-      featuredImage: values.featuredImage.trim(),
-    }
+  const onSubmit = ({ featuredImage, ...values }: BlogFormValues) => {
+    // Files are saved by id: the picker already uploaded the image, so only its id goes with the blog.
+    const payload = { ...values, title: values.title.trim(), featuredImageId: featuredImage?.id ?? null }
     if (isEdit && blog) {
       updateBlog.mutate({ id: blog.id, ...payload }, { onSuccess: onClose })
     } else {
@@ -174,23 +183,19 @@ export default function ManageBlogModal({ open, onClose, blog }: ManageBlogModal
           </div>
         </div>
 
-        <div>
-          <TextField
-            label="Featured image URL"
-            placeholder="https://..."
-            error={errors.featuredImage?.message}
-            {...register('featuredImage')}
-          />
-          {featuredImage && !errors.featuredImage && (
-            <img
-              src={featuredImage}
-              alt="Featured preview"
-              className="mt-2 h-32 w-full rounded-lg border border-border object-cover"
-              onError={(e) => (e.currentTarget.style.display = 'none')}
-              onLoad={(e) => (e.currentTarget.style.display = 'block')}
+        <Controller
+          name="featuredImage"
+          control={control}
+          render={({ field }) => (
+            <ImageUpload
+              label="Featured image"
+              value={field.value}
+              onChange={field.onChange}
+              helperText="Shown on the blog card and at the top of the article."
+              error={errors.featuredImage?.message}
             />
           )}
-        </div>
+        />
 
         <div>
           <label htmlFor="blog-content" className="mb-1.5 block text-sm font-medium text-heading">
@@ -214,7 +219,7 @@ export default function ManageBlogModal({ open, onClose, blog }: ManageBlogModal
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Controller
-            name="status"
+            name="publishStatus"
             control={control}
             render={({ field }) => (
               <Dropdown
@@ -224,7 +229,7 @@ export default function ManageBlogModal({ open, onClose, blog }: ManageBlogModal
                 options={STATUS_OPTIONS}
                 value={field.value}
                 onChange={field.onChange}
-                error={errors.status?.message}
+                error={errors.publishStatus?.message}
               />
             )}
           />

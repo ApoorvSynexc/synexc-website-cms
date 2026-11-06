@@ -1,4 +1,4 @@
-/** `id` is "<subject>:<action>", e.g. "blog:create". */
+/** One cell of the matrix. `id` is the backend id; `subject` / `action` say which module and verb. */
 export type Permission = {
   id: string
   subject: string

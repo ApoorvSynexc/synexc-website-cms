@@ -5,7 +5,6 @@ import DashboardPage from '../pages/dashboard'
 import CaseStudiesPage from '../pages/case-studies'
 import AnnouncementsPage from '../pages/announcements'
 import WebsiteContentPage from '../pages/website-content'
-import InquiriesPage from '../pages/inquiries'
 import SiteSettingsPage from '../pages/site-settings'
 import AccessControlPage from '../pages/access-control'
 import { useSession } from '../hooks'
@@ -34,7 +33,6 @@ function HomeRedirect() {
   if (can('blog', 'read')) return <Navigate to="/blogs" replace />
   if (can('case_study', 'read')) return <Navigate to="/case-studies" replace />
   if (can('announcement', 'read')) return <Navigate to="/announcements" replace />
-  if (can('inquiry', 'read')) return <Navigate to="/inquiries" replace />
   if (can('site_settings', 'read')) return <Navigate to="/site-settings" replace />
   if (WEBSITE_CONTENT_SUBJECTS.some((s) => can(s, 'read'))) return <Navigate to="/website-content" replace />
   if (can('user', 'read') || can('role', 'read') || can('role_permission', 'read')) {
@@ -64,10 +62,6 @@ export function AppRoutes() {
         <Route
           path="/announcements"
           element={<PermissionRoute anyOf={[['announcement', 'read']]}><AnnouncementsPage /></PermissionRoute>}
-        />
-        <Route
-          path="/inquiries"
-          element={<PermissionRoute anyOf={[['inquiry', 'read']]}><InquiriesPage /></PermissionRoute>}
         />
         <Route
           path="/site-settings"

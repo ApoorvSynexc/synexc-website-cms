@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { joiResolver } from '@hookform/resolvers/joi'
 import dayjs from 'dayjs'
-import { Button, Dropdown, Modal, TextField, ToggleButton, Typography } from '../../../components'
+import { Button, Dropdown, ImageUpload, Modal, TextField, ToggleButton, Typography } from '../../../components'
 import { getErrorMessage } from '../../../lib'
 import { useAnnouncement, type Announcement } from '../../../services'
 import { announcementSchema, type AnnouncementFormValues } from './validations'
@@ -28,10 +28,26 @@ const emptyValues = (): AnnouncementFormValues => ({
   venue: '',
   ctaLabel: '',
   ctaUrl: '',
-  image: '',
+  image: null,
   startDate: dayjs().format('YYYY-MM-DD'),
   endDate: dayjs().add(30, 'day').format('YYYY-MM-DD'),
   isActive: true,
+})
+
+/** Only the fields the form edits (the API row also has id, imageId, createdAt …). */
+const toFormValues = (a: Announcement): AnnouncementFormValues => ({
+  badge: a.badge,
+  title: a.title,
+  message: a.message,
+  type: a.type,
+  eventDate: a.eventDate,
+  venue: a.venue,
+  ctaLabel: a.ctaLabel,
+  ctaUrl: a.ctaUrl,
+  image: a.image,
+  startDate: a.startDate,
+  endDate: a.endDate,
+  isActive: a.isActive,
 })
 
 const textareaClass =
@@ -57,14 +73,14 @@ export default function ManageAnnouncementModal({ open, onClose, announcement }:
 
   useEffect(() => {
     if (!open) return
-    reset(announcement ? { ...announcement } : emptyValues())
+    reset(announcement ? toFormValues(announcement) : emptyValues())
     mutation.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, announcement])
 
   const messageLength = watch('message')?.length ?? 0
 
-  const onSubmit = (values: AnnouncementFormValues) => {
+  const onSubmit = ({ image, ...values }: AnnouncementFormValues) => {
     // The button needs both a label and a link — or neither.
     if (values.ctaLabel && !values.ctaUrl) {
       setError('ctaUrl', { message: 'Add the link this button opens' })
@@ -74,10 +90,12 @@ export default function ManageAnnouncementModal({ open, onClose, announcement }:
       setError('ctaLabel', { message: 'Add the button text' })
       return
     }
+    // Files are saved by id: the picker already uploaded the image, so only its id goes with the announcement.
+    const payload = { ...values, imageId: image?.id ?? null }
     if (isEdit && announcement) {
-      updateAnnouncement.mutate({ id: announcement.id, ...values }, { onSuccess: onClose })
+      updateAnnouncement.mutate({ id: announcement.id, ...payload }, { onSuccess: onClose })
     } else {
-      createAnnouncement.mutate(values, { onSuccess: onClose })
+      createAnnouncement.mutate(payload, { onSuccess: onClose })
     }
   }
 
@@ -178,11 +196,18 @@ export default function ManageAnnouncementModal({ open, onClose, announcement }:
           />
         </div>
 
-        <TextField
-          label="Logo / image URL"
-          placeholder="https://..."
-          error={errors.image?.message}
-          {...register('image')}
+        <Controller
+          name="image"
+          control={control}
+          render={({ field }) => (
+            <ImageUpload
+              label="Logo / image"
+              value={field.value}
+              onChange={field.onChange}
+              helperText="Optional. Shown in the popup or banner."
+              error={errors.image?.message}
+            />
+          )}
         />
 
         <div className="rounded-lg border border-border bg-surface-2 p-3">

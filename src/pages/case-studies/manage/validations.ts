@@ -1,5 +1,5 @@
 import Joi from 'joi'
-import type { CaseStudyResult, CaseStudyStatus } from '../../../services'
+import type { CaseStudyResult, CaseStudyStatus, Media } from '../../../services'
 
 export type CaseStudyFormValues = {
   title: string
@@ -7,12 +7,13 @@ export type CaseStudyFormValues = {
   client: string
   category: string
   description: string
-  image: string
+  /** The uploaded cover image (its id is what gets saved), or null. */
+  image: Media | null
   content: string
   tags: string[]
   results: CaseStudyResult[]
   readTime: string
-  status: CaseStudyStatus
+  publishStatus: CaseStudyStatus
   publishedAt: string
 }
 
@@ -40,14 +41,7 @@ export const caseStudySchema = Joi.object<CaseStudyFormValues>({
     'string.empty': 'Short description is required',
     'string.max': 'Description must be at most 400 characters',
   }),
-  image: Joi.string()
-    .trim()
-    .uri({ scheme: ['http', 'https'] })
-    .allow('')
-    .messages({
-      'string.uri': 'Enter a valid http(s) image URL',
-      'string.uriCustomScheme': 'Enter a valid image URL starting with https://',
-    }),
+  image: Joi.object().allow(null).messages({ 'object.base': 'Upload a valid image' }),
   content: Joi.string()
     .required()
     .custom((value: string, helpers) => {
@@ -82,7 +76,7 @@ export const caseStudySchema = Joi.object<CaseStudyFormValues>({
       'string.empty': 'Read time is required',
       'string.pattern.base': 'Use the format "5 min read"',
     }),
-  status: Joi.string().valid('PUBLISHED', 'DRAFT').required(),
+  publishStatus: Joi.string().valid('PUBLISHED', 'DRAFT').required(),
   publishedAt: Joi.string()
     .pattern(/^\d{4}-\d{2}-\d{2}$/)
     .required()

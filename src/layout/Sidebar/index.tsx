@@ -1,8 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useSession } from '../../hooks'
-import { useInquiryCounts } from '../../services'
 import type { ComponentType } from 'react'
-import { FiBell, FiBookOpen, FiLayout, FiChevronLeft, FiChevronRight, FiFileText, FiHome, FiInbox, FiSettings, FiShield } from 'react-icons/fi'
+import { FiBell, FiBookOpen, FiLayout, FiChevronLeft, FiChevronRight, FiFileText, FiHome, FiSettings, FiShield } from 'react-icons/fi'
 
 type NavItem = {
   label: string
@@ -11,8 +10,6 @@ type NavItem = {
   to?: string
   /** Shown only if the user has at least one of these [subject, action] permissions. */
   anyOf?: [string, string][]
-  /** Show the count of new inquiries on this item. */
-  showNewInquiries?: boolean
 }
 
 const MAIN_NAV: NavItem[] = [
@@ -20,7 +17,6 @@ const MAIN_NAV: NavItem[] = [
   { label: 'Blogs', icon: FiBookOpen, to: '/blogs', anyOf: [['blog', 'read']] },
   { label: 'Case Studies', icon: FiFileText, to: '/case-studies', anyOf: [['case_study', 'read']] },
   { label: 'Announcements', icon: FiBell, to: '/announcements', anyOf: [['announcement', 'read']] },
-  { label: 'Inquiries', icon: FiInbox, to: '/inquiries', anyOf: [['inquiry', 'read']], showNewInquiries: true },
   {
     label: 'Website Content',
     icon: FiLayout,
@@ -58,7 +54,6 @@ type SidebarProps = {
 
 export function Sidebar({ collapsed, onToggleCollapsed }: SidebarProps) {
   const { can } = useSession()
-  const { data: counts } = useInquiryCounts(can('inquiry', 'read'))
   const items = MAIN_NAV.filter((item) => !item.anyOf || item.anyOf.some(([s, a]) => can(s, a)))
 
   return (
@@ -83,7 +78,6 @@ export function Sidebar({ collapsed, onToggleCollapsed }: SidebarProps) {
               <NavItemLink
                 item={item}
                 collapsed={collapsed}
-                badge={item.showNewInquiries && counts?.NEW ? counts.NEW : undefined}
               />
             </li>
           ))}

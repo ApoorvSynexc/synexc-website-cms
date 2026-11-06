@@ -12,7 +12,6 @@ const PAGE_TITLES: Record<string, string> = {
   '/blogs': 'Blogs',
   '/case-studies': 'Case Studies',
   '/announcements': 'Announcements',
-  '/inquiries': 'Inquiries',
 }
 
 export function Navbar() {
@@ -48,7 +47,7 @@ export function Navbar() {
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center gap-2 rounded-lg py-1.5 pr-2 pl-1.5 transition-colors hover:bg-surface-2"
           >
-            <Avatar name={fullName} src={user?.profile?.url} size="sm" />
+            <Avatar name={fullName} src={user?.avatar?.thumbnailUrl ?? user?.avatar?.url} size="sm" />
             <span className="hidden text-left sm:block">
               <span className="block text-sm font-medium text-heading">{fullName}</span>
               <span className="block text-xs text-body">{user?.email}</span>

@@ -35,7 +35,7 @@ export default function PostsModule() {
   const [togglingId, setTogglingId] = useState<string | null>(null)
 
   const { getBlogs, updateBlog, deleteBlog } = useBlog({
-    listParams: { page, limit: PAGE_SIZE, search, categoryId, status },
+    listParams: { page, limit: PAGE_SIZE, search, categoryId, publishStatus: status },
   })
   const { getCategories } = useBlogCategory()
   const categories = getCategories.data ?? []
@@ -64,7 +64,7 @@ export default function PostsModule() {
   const toggleStatus = (blog: Blog) => {
     setTogglingId(blog.id)
     updateBlog.mutate(
-      { id: blog.id, status: blog.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED' },
+      { id: blog.id, publishStatus: blog.publishStatus === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED' },
       { onSettled: () => setTogglingId(null) },
     )
   }
@@ -82,7 +82,7 @@ export default function PostsModule() {
       render: (row) => (
         <div className="flex items-center gap-3">
           {row.featuredImage ? (
-            <img src={row.featuredImage} alt="" className="h-10 w-14 rounded-md object-cover" />
+            <img src={row.featuredImage.thumbnailUrl ?? row.featuredImage.url} alt="" className="h-10 w-14 rounded-md object-cover" />
           ) : (
             <div className="flex h-10 w-14 items-center justify-center rounded-md bg-surface-2 text-xs font-bold text-body">
               S
@@ -105,7 +105,7 @@ export default function PostsModule() {
       render: (row) => (
         <ToggleButton
           size="sm"
-          checked={row.status === 'PUBLISHED'}
+          checked={row.publishStatus === 'PUBLISHED'}
           loading={togglingId === row.id}
           disabled={!can('blog', 'update')}
           onChange={() => toggleStatus(row)}

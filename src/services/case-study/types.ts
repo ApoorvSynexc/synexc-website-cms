@@ -1,3 +1,6 @@
+import type { Media } from '../media/types'
+
+/** Is the study live on the website? (Separate from the row `status`.) */
 export type CaseStudyStatus = 'PUBLISHED' | 'DRAFT'
 
 export const CASE_STUDY_CATEGORIES = [
@@ -18,25 +21,40 @@ export type CaseStudy = {
   client: string
   category: string
   description: string
-  /** Hero / card image URL. */
-  image: string
+  imageId: string | null
+  /** Cover image (an uploaded file). */
+  image: Media | null
   /** HTML body. */
   content: string
   tags: string[]
   results: CaseStudyResult[]
   readTime: string
-  status: CaseStudyStatus
+  publishStatus: CaseStudyStatus
   /** YYYY-MM-DD */
   publishedAt: string
   createdAt: string
 }
 
-export type CaseStudyInput = Omit<CaseStudy, 'id' | 'createdAt'>
+export type CaseStudyInput = {
+  title: string
+  slug: string
+  client: string
+  category: string
+  description: string
+  /** Id of an uploaded file (see useMedia); null clears it. */
+  imageId: string | null
+  content: string
+  tags: string[]
+  results: CaseStudyResult[]
+  readTime: string
+  publishStatus: CaseStudyStatus
+  publishedAt: string
+}
 
 export type CaseStudyListParams = {
   page: number
   limit: number
   search?: string
   category?: string
-  status?: CaseStudyStatus | ''
+  publishStatus?: CaseStudyStatus | ''
 }
