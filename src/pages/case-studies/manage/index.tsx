@@ -15,7 +15,6 @@ import {
 } from '../../../components'
 import { getErrorMessage } from '../../../lib'
 import { CASE_STUDY_CATEGORIES, useCaseStudy, type CaseStudy } from '../../../services'
-import { slugify } from '../../../utils/helper'
 import { caseStudySchema, type CaseStudyFormValues } from './validations'
 
 type Props = {
@@ -34,7 +33,6 @@ const CATEGORY_OPTIONS = CASE_STUDY_CATEGORIES.map((c) => ({ label: c, value: c 
 
 const emptyValues = (): CaseStudyFormValues => ({
   title: '',
-  slug: '',
   client: '',
   category: '',
   description: '',
@@ -50,7 +48,6 @@ const emptyValues = (): CaseStudyFormValues => ({
 /** Only the fields the form edits (the API row also has id, imageId, createdAt …). */
 const toFormValues = (study: CaseStudy): CaseStudyFormValues => ({
   title: study.title,
-  slug: study.slug,
   client: study.client,
   category: study.category,
   description: study.description,
@@ -76,9 +73,8 @@ export default function ManageCaseStudyModal({ open, onClose, caseStudy }: Props
     control,
     handleSubmit,
     reset,
-    setValue,
     watch,
-    formState: { errors, dirtyFields },
+    formState: { errors },
   } = useForm<CaseStudyFormValues>({
     defaultValues: emptyValues(),
     resolver: joiResolver(caseStudySchema),
@@ -93,12 +89,6 @@ export default function ManageCaseStudyModal({ open, onClose, caseStudy }: Props
   }, [open, caseStudy])
 
   const descriptionLength = watch('description')?.length ?? 0
-
-  const titleField = register('title', {
-    onChange: (e) => {
-      if (!dirtyFields.slug) setValue('slug', slugify(e.target.value))
-    },
-  })
 
   const onSubmit = ({ image, ...values }: CaseStudyFormValues) => {
     // Files are saved by id: the picker already uploaded the image, so only its id goes with the study.
@@ -146,14 +136,7 @@ export default function ManageCaseStudyModal({ open, onClose, caseStudy }: Props
           placeholder="e.g. Automating Stripe–Zoho Books Integration for a SaaS Company"
           required
           error={errors.title?.message}
-          {...titleField}
-        />
-        <TextField
-          label="Slug"
-          required
-          helperText="Used in the URL: /case-studies/your-slug"
-          error={errors.slug?.message}
-          {...register('slug')}
+          {...register('title')}
         />
 
         <div className="grid gap-4 sm:grid-cols-2">

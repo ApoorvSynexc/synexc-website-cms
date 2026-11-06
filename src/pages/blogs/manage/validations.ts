@@ -3,7 +3,6 @@ import type { BlogStatus, Media } from '../../../services'
 
 export type BlogFormValues = {
   title: string
-  slug: string
   excerpt: string
   content: string
   categoryId: string
@@ -19,16 +18,6 @@ export const blogSchema = Joi.object<BlogFormValues>({
     'string.empty': 'Title is required',
     'string.max': 'Title must be at most 150 characters',
   }),
-  slug: Joi.string()
-    .trim()
-    .max(160)
-    .pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-    .required()
-    .messages({
-      'string.empty': 'Slug is required',
-      'string.max': 'Slug must be at most 160 characters',
-      'string.pattern.base': 'Use lowercase letters, numbers and single hyphens only',
-    }),
   excerpt: Joi.string().trim().max(300).required().messages({
     'string.empty': 'Excerpt is required',
     'string.max': 'Excerpt must be at most 300 characters',

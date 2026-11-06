@@ -3,7 +3,6 @@ import type { CaseStudyResult, CaseStudyStatus, Media } from '../../../services'
 
 export type CaseStudyFormValues = {
   title: string
-  slug: string
   client: string
   category: string
   description: string
@@ -22,16 +21,6 @@ export const caseStudySchema = Joi.object<CaseStudyFormValues>({
     'string.empty': 'Title is required',
     'string.max': 'Title must be at most 200 characters',
   }),
-  slug: Joi.string()
-    .trim()
-    .max(200)
-    .pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-    .required()
-    .messages({
-      'string.empty': 'Slug is required',
-      'string.max': 'Slug must be at most 200 characters',
-      'string.pattern.base': 'Use lowercase letters, numbers and single hyphens only',
-    }),
   client: Joi.string().trim().max(100).required().messages({
     'string.empty': 'Client name is required',
     'string.max': 'Client name must be at most 100 characters',

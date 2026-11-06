@@ -24,7 +24,6 @@ export type Blog = {
 
 export type BlogInput = {
   title: string
-  slug: string
   excerpt: string
   content: string
   categoryId: string

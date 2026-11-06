@@ -37,7 +37,6 @@ export type CaseStudy = {
 
 export type CaseStudyInput = {
   title: string
-  slug: string
   client: string
   category: string
   description: string

@@ -4,7 +4,6 @@ import { joiResolver } from '@hookform/resolvers/joi'
 import { Button, Modal, TextField, Typography } from '../../../components'
 import { getErrorMessage } from '../../../lib'
 import { useBlogCategory, type BlogCategory } from '../../../services'
-import { slugify } from '../../../utils/helper'
 import { categorySchema, type CategoryFormValues } from './validations'
 
 type Props = {
@@ -22,28 +21,21 @@ export default function ManageCategoryModal({ open, onClose, category }: Props) 
     register,
     handleSubmit,
     reset,
-    setValue,
-    formState: { errors, dirtyFields },
+    formState: { errors },
   } = useForm<CategoryFormValues>({
-    defaultValues: { name: '', slug: '' },
+    defaultValues: { name: '' },
     resolver: joiResolver(categorySchema),
   })
 
   useEffect(() => {
     if (!open) return
-    reset({ name: category?.name ?? '', slug: category?.slug ?? '' })
+    reset({ name: category?.name ?? '' })
     mutation.reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, category])
 
-  const nameField = register('name', {
-    onChange: (e) => {
-      if (!dirtyFields.slug) setValue('slug', slugify(e.target.value))
-    },
-  })
-
   const onSubmit = (values: CategoryFormValues) => {
-    const payload = { name: values.name.trim(), slug: values.slug }
+    const payload = { name: values.name.trim() }
     if (isEdit && category) {
       updateCategory.mutate({ id: category.id, ...payload }, { onSuccess: onClose })
     } else {
@@ -78,14 +70,7 @@ export default function ManageCategoryModal({ open, onClose, category }: Props) 
           placeholder="e.g. Cloud"
           required
           error={errors.name?.message}
-          {...nameField}
-        />
-        <TextField
-          label="Slug"
-          placeholder="cloud"
-          required
-          error={errors.slug?.message}
-          {...register('slug')}
+          {...register('name')}
         />
       </form>
     </Modal>

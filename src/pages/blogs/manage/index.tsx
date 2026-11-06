@@ -5,7 +5,6 @@ import dayjs from 'dayjs'
 import { Button, Dropdown, ImageUpload, Modal, RichTextEditor, TextField, Typography } from '../../../components'
 import { getErrorMessage } from '../../../lib'
 import { useBlog, useBlogCategory, type Blog } from '../../../services'
-import { slugify } from '../../../utils/helper'
 import { blogSchema, type BlogFormValues } from './validations'
 
 type ManageBlogModalProps = {
@@ -22,7 +21,6 @@ const STATUS_OPTIONS = [
 
 const emptyValues = (): BlogFormValues => ({
   title: '',
-  slug: '',
   excerpt: '',
   content: '',
   categoryId: '',
@@ -35,7 +33,6 @@ const emptyValues = (): BlogFormValues => ({
 /** Only the fields the form edits (the API row also has id, category, createdAt …). */
 const toFormValues = (blog: Blog): BlogFormValues => ({
   title: blog.title,
-  slug: blog.slug,
   excerpt: blog.excerpt,
   content: blog.content,
   categoryId: blog.categoryId,
@@ -59,9 +56,8 @@ export default function ManageBlogModal({ open, onClose, blog }: ManageBlogModal
     control,
     handleSubmit,
     reset,
-    setValue,
     watch,
-    formState: { errors, dirtyFields },
+    formState: { errors },
   } = useForm<BlogFormValues>({
     defaultValues: emptyValues(),
     resolver: joiResolver(blogSchema),
@@ -77,13 +73,6 @@ export default function ManageBlogModal({ open, onClose, blog }: ManageBlogModal
   const excerptLength = watch('excerpt')?.length ?? 0
 
   const categoryOptions = (getCategories.data ?? []).map((c) => ({ label: c.name, value: c.id }))
-
-  const titleField = register('title', {
-    // Keep the slug in sync with the title until the user edits the slug by hand.
-    onChange: (e) => {
-      if (!dirtyFields.slug) setValue('slug', slugify(e.target.value))
-    },
-  })
 
   const onSubmit = ({ featuredImage, ...values }: BlogFormValues) => {
     // Files are saved by id: the picker already uploaded the image, so only its id goes with the blog.
@@ -126,16 +115,7 @@ export default function ManageBlogModal({ open, onClose, blog }: ManageBlogModal
           placeholder="e.g. How AI Is Changing Gaming"
           required
           error={errors.title?.message}
-          {...titleField}
-        />
-
-        <TextField
-          label="Slug"
-          placeholder="how-ai-is-changing-gaming"
-          required
-          helperText="Used in the blog URL: /blog/your-slug"
-          error={errors.slug?.message}
-          {...register('slug')}
+          {...register('title')}
         />
 
         <div className="grid gap-4 sm:grid-cols-2">

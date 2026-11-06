@@ -4,4 +4,4 @@ export type BlogCategory = {
   slug: string
 }
 
-export type BlogCategoryInput = Omit<BlogCategory, 'id'>
+export type BlogCategoryInput = Omit<BlogCategory, 'id' | 'slug'>
