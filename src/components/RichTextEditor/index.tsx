@@ -20,7 +20,7 @@ import {
   FiMinus,
   FiUnderline,
 } from 'react-icons/fi'
-import { LuEraser, LuHeading2, LuHeading3, LuListOrdered, LuQuote, LuStrikethrough, LuTable } from 'react-icons/lu'
+import { LuEraser, LuFileCode, LuHeading2, LuHeading3, LuListOrdered, LuQuote, LuStrikethrough, LuTable } from 'react-icons/lu'
 
 export type RichTextEditorProps = {
   /** HTML string. */
@@ -35,6 +35,7 @@ export type RichTextEditorProps = {
 const normalise = (html: string) => (html === '<p></p>' ? '' : html)
 
 export function RichTextEditor({ value, onChange, placeholder, error, id }: RichTextEditorProps) {
+  const [source, setSource] = useState(false)
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] }, link: { openOnClick: false } }),
@@ -64,13 +65,34 @@ export function RichTextEditor({ value, onChange, placeholder, error, id }: Rich
         error ? 'border-red-500' : 'border-border'
       }`}
     >
-      {editor && <Toolbar editor={editor} />}
-      <EditorContent editor={editor} />
+      {editor && (
+        <Toolbar
+          editor={editor}
+          source={source}
+          onToggleSource={() => {
+            // Leaving HTML mode: store what the editor actually understood, so the saved HTML is clean.
+            if (source) onChange(normalise(editor.getHTML()))
+            setSource((v) => !v)
+          }}
+        />
+      )}
+      {source ? (
+        <textarea
+          id={id}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          spellCheck={false}
+          placeholder="Paste or edit HTML here…"
+          className="block min-h-72 w-full resize-y bg-surface p-3 font-mono text-xs text-heading outline-none placeholder:text-body/60"
+        />
+      ) : (
+        <EditorContent editor={editor} />
+      )}
     </div>
   )
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({ editor, source, onToggleSource }: { editor: Editor; source: boolean; onToggleSource: () => void }) {
   const s = useEditorState({
     editor,
     selector: ({ editor: e }) => ({
@@ -112,16 +134,40 @@ function Toolbar({ editor }: { editor: Editor }) {
     }
   }
 
+  /**
+   * A heading is a whole block, so toggling it normally turns the entire paragraph into a heading.
+   * When only part of one paragraph is selected, split the paragraph around the selection first so
+   * that just the selected text becomes the heading.
+   */
+  const toggleHeading = (level: 2 | 3) => {
+    const { from, to, empty, $from, $to } = editor.state.selection
+    const partial =
+      !empty &&
+      !editor.isActive('heading') &&
+      $from.sameParent($to) &&
+      $from.parent.isTextblock &&
+      ($from.parentOffset > 0 || $to.parentOffset < $to.parent.content.size)
+    if (!partial) {
+      editor.chain().focus().toggleHeading({ level }).run()
+      return
+    }
+    const chain = editor.chain().focus()
+    if ($to.parentOffset < $to.parent.content.size) chain.setTextSelection(to).splitBlock()
+    if ($from.parentOffset > 0) chain.setTextSelection(from).splitBlock()
+    chain.setTextSelection({ from: $from.parentOffset > 0 ? from + 2 : from, to: $from.parentOffset > 0 ? to + 2 : to })
+    chain.toggleHeading({ level }).run()
+  }
+
   const insertTable = (rows: number, cols: number) =>
     editor.chain().focus().insertTable({ rows, cols, withHeaderRow: true }).run()
 
   return (
     <div className="border-b border-border bg-surface-2">
     <div className="flex flex-wrap items-center gap-0.5 p-1.5">
-      <Btn label="Heading 2" active={s.h2} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+      <Btn label="Heading 2" active={s.h2} onClick={() => toggleHeading(2)}>
         <LuHeading2 size={16} />
       </Btn>
-      <Btn label="Heading 3" active={s.h3} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+      <Btn label="Heading 3" active={s.h3} onClick={() => toggleHeading(3)}>
         <LuHeading3 size={16} />
       </Btn>
       <Sep />
@@ -178,10 +224,14 @@ function Toolbar({ editor }: { editor: Editor }) {
         <LuEraser size={15} />
       </Btn>
       <Sep />
-      <Btn label="Undo" disabled={!s.canUndo} onClick={() => editor.chain().focus().undo().run()}>
+      <Btn label={source ? 'Back to visual editor' : 'Edit / paste HTML'} active={source} onClick={onToggleSource}>
+        <LuFileCode size={16} />
+      </Btn>
+      <Sep />
+      <Btn label="Undo" disabled={!s.canUndo || source} onClick={() => editor.chain().focus().undo().run()}>
         <FiRotateCcw size={15} />
       </Btn>
-      <Btn label="Redo" disabled={!s.canRedo} onClick={() => editor.chain().focus().redo().run()}>
+      <Btn label="Redo" disabled={!s.canRedo || source} onClick={() => editor.chain().focus().redo().run()}>
         <FiRotateCw size={15} />
       </Btn>
     </div>
