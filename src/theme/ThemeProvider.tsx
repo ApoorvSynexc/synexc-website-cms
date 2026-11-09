@@ -10,10 +10,10 @@ import {
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type ResolvedTheme = 'light' | 'dark'
-export type Palette = 'indigo' | 'olive'
+export type Palette = 'indigo' | 'blue' | 'teal' | 'emerald' | 'violet' | 'rose' | 'amber' | 'olive'
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const PALETTES: readonly Palette[] = ['indigo', 'olive']
+export const PALETTES: readonly Palette[] = ['indigo', 'blue', 'teal', 'emerald', 'violet', 'rose', 'amber', 'olive']
 
 const MODE_STORAGE_KEY = 'synexc-theme'
 const PALETTE_STORAGE_KEY = 'synexc-palette'

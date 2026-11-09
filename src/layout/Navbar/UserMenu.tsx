@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { FiLogOut, FiUser } from 'react-icons/fi'
 import { Avatar } from '../../components'
 import type { Profile } from '../../services'
+import { AppearanceSettings } from '../../theme'
 
 type MenuItem = {
   label: string
@@ -44,6 +45,8 @@ export function UserMenu({ user, fullName, onClose, onSignOut, signingOut }: Use
       </div>
 
       <MenuSection items={ACCOUNT_ITEMS} onItemClick={handleItemClick} />
+      <div className="border-t border-border" />
+      <AppearanceSettings />
       <div className="border-t border-border" />
 
       <button

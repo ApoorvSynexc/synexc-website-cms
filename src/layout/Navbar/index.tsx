@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { FiChevronDown } from 'react-icons/fi'
 import { Avatar } from '../../components'
-import { PalettePicker, ThemeToggle } from '../../theme'
 import { useSession } from '../../hooks'
 import { useAuth } from '../../services'
 import { UserMenu } from './UserMenu'
@@ -37,11 +36,7 @@ export function Navbar() {
       </nav>
 
       <div className="ml-auto flex shrink-0 items-center gap-2">
-        <PalettePicker />
-        <ThemeToggle />
-        <div className="mx-1 h-6 w-px bg-border" />
-
-        <div className="relative ml-1">
+        <div className="relative">
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
