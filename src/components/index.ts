@@ -49,3 +49,4 @@ export type { SectionLayoutItem } from './SectionLayout'
 
 export { ImageUpload } from './ImageUpload'
 export type { ImageUploadProps } from './ImageUpload'
+export * from './Stats'

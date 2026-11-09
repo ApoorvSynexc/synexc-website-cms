@@ -55,7 +55,7 @@ export function useBlogStats() {
   return useQuery({
     queryKey: blogKeys.stats(),
     queryFn: async (): Promise<BlogStats> => {
-      const { data } = await http.get<BlogStats>('/v1/dashboard/stats')
+      const { data } = await http.get<BlogStats>('/v1/blog/stats')
       return { ...data, recent: data.recent.map(fromApi), drafted: data.drafted.map(fromApi) }
     },
   })

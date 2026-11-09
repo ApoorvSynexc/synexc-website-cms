@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { FiEdit2, FiPlus, FiSearch, FiTrash2 } from 'react-icons/fi'
 import {
   Button,
@@ -43,7 +44,13 @@ export default function AnnouncementsPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [type, setType] = useState<AnnouncementType | ''>('')
-  const [manageOpen, setManageOpen] = useState(false)
+  // Dashboard quick actions link here with ?new=1 to open the create form straight away.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [manageOpen, setManageOpen] = useState(() => searchParams.get('new') === '1')
+  useEffect(() => {
+    if (searchParams.has('new')) setSearchParams({}, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [editing, setEditing] = useState<Announcement | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Announcement | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)

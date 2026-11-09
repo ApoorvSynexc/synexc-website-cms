@@ -1,285 +1,292 @@
-import type { ComponentType, ReactNode } from 'react'
+import type { ComponentType } from 'react'
 import { Link } from 'react-router-dom'
-import { FiBookOpen, FiCalendar, FiCheckCircle, FiEdit3, FiPlus } from 'react-icons/fi'
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import { Button, Typography } from '../../components'
+  FiAward,
+  FiBarChart2,
+  FiBell,
+  FiBookOpen,
+  FiCamera,
+  FiClock,
+  FiFileText,
+  FiHelpCircle,
+  FiImage,
+  FiAlertCircle,
+  FiLayers,
+  FiMessageSquare,
+  FiPlus,
+  FiShield,
+  FiUsers,
+} from 'react-icons/fi'
+import { Empty, Panel, Typography } from '../../components'
 import { useSession } from '../../hooks'
-import { useBlogCategory, useBlogStats, type Blog } from '../../services'
+import { useDashboard, type DashboardOverview } from '../../services'
 import { formatDate } from '../../utils/date'
 
-const CHART_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6', '#ef4444']
-const AXIS_TICK = { fill: 'var(--text)', fontSize: 12 }
-const TOOLTIP_STYLE = {
-  background: 'var(--bg)',
-  border: '1px solid var(--border)',
-  borderRadius: 8,
-  fontSize: 12,
-  color: 'var(--text-h)',
+type Icon = ComponentType<{ size?: number }>
+type Tone = 'emerald' | 'amber' | 'accent' | 'muted'
+type Row = [label: string, value: number, tone: Tone]
+
+/** Website-content lists: label, icon and the page each one lives on. */
+const CONTENT: Record<string, { label: string; icon: Icon; to: string }> = {
+  hero_slide: { label: 'Hero slides', icon: FiLayers, to: '/website-content/hero-slide' },
+  testimonial: { label: 'Testimonials', icon: FiMessageSquare, to: '/website-content/testimonial' },
+  faq: { label: 'FAQs', icon: FiHelpCircle, to: '/website-content/faq' },
+  partner_logo: { label: 'Partner logos', icon: FiImage, to: '/website-content/partner-logo' },
+  team_member: { label: 'Leadership', icon: FiUsers, to: '/website-content/leadership' },
+  timeline_event: { label: 'Timeline events', icon: FiClock, to: '/website-content/timeline' },
+  certification: { label: 'Certifications', icon: FiAward, to: '/website-content/certification' },
+  key_stat: { label: 'Key stats', icon: FiBarChart2, to: '/website-content/key-stat' },
+  gallery_image: { label: 'Gallery photos', icon: FiCamera, to: '/website-content/gallery' },
+}
+
+const RECENT_TYPE = {
+  blog: { label: 'Blog', to: '/blogs' },
+  case_study: { label: 'Case study', to: '/case-studies' },
+}
+
+const DOT: Record<Tone, string> = {
+  emerald: 'bg-emerald-500',
+  amber: 'bg-amber-500',
+  accent: 'bg-accent',
+  muted: 'bg-border',
 }
 
 export default function DashboardPage() {
-  const { user } = useSession()
-  const { data: stats, isLoading } = useBlogStats()
-  const { getCategories } = useBlogCategory()
-  const categories = getCategories.data ?? []
-  const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? 'Uncategorised'
+  const { user, can } = useSession()
+  const { data, isLoading } = useDashboard()
+  const content = data?.content ?? []
+  const actions = [
+    { label: 'New blog', to: '/blogs?new=1', show: can('blog', 'create') },
+    { label: 'New case study', to: '/case-studies?new=1', show: can('case_study', 'create') },
+    { label: 'New announcement', to: '/announcements?new=1', show: can('announcement', 'create') },
+  ].filter((a) => a.show)
 
-  const categoryData = [...(stats?.byCategory ?? [])]
-    .sort((a, b) => b.count - a.count)
-    .map((c) => ({ name: c.name, count: c.count }))
+  const attention: { text: string; to: string }[] = []
+  const stale = data?.attention?.staleDrafts
+  if (stale?.blogs) attention.push({ text: `${stale.blogs} blog draft${stale.blogs > 1 ? 's' : ''} untouched for over 2 weeks`, to: '/blogs' })
+  if (stale?.caseStudies) {
+    attention.push({ text: `${stale.caseStudies} case study draft${stale.caseStudies > 1 ? 's' : ''} untouched for over 2 weeks`, to: '/case-studies' })
+  }
+  for (const a of data?.attention?.endingSoon ?? []) {
+    attention.push({ text: `Announcement “${a.title}” ends ${formatDate(a.endDate)}`, to: '/announcements' })
+  }
+  if (data?.users?.locked) {
+    attention.push({ text: `${data.users.locked} user account${data.users.locked > 1 ? 's are' : ' is'} locked`, to: '/access-control' })
+  }
+
+  const empty = !isLoading && data && !data.blog && !data.caseStudy && !data.announcement && !data.users && !content.length
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Typography variant="h5">Welcome back, {user?.name?.split(' ')[0] ?? 'there'}</Typography>
-          <Typography variant="body-sm" color="body" className="mt-0.5">
-            Here&apos;s what&apos;s happening with your blog content.
-          </Typography>
+    <div className="flex flex-col gap-5">
+      <div>
+        <Typography variant="h5">Welcome back, {user?.name?.split(' ')[0] ?? 'there'}</Typography>
+        <Typography variant="body-sm" color="body" className="mt-0.5">
+          A quick look at everything you manage on the Synexc website.
+        </Typography>
+      </div>
+
+      {actions.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {actions.map((a) => (
+            <Link
+              key={a.to}
+              to={a.to}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-accent-fg transition-opacity hover:opacity-90"
+            >
+              <FiPlus size={15} />
+              {a.label}
+            </Link>
+          ))}
         </div>
-        <Link to="/blogs">
-          <Button size="sm" leftIcon={<FiPlus size={16} />}>
-            Manage Blogs
-          </Button>
-        </Link>
+      )}
+
+      {attention.length > 0 && (
+        <Panel title="Needs attention" subtitle="Things worth a look today">
+          <ul className="divide-y divide-border">
+            {attention.map((item) => (
+              <li key={item.text}>
+                <Link to={item.to} className="flex items-center gap-3 py-2.5 text-sm text-heading hover:text-accent">
+                  <FiAlertCircle size={16} className="shrink-0 text-amber-500" />
+                  {item.text}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
+
+      {isLoading && (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-32 animate-pulse rounded-xl border border-border bg-surface" />
+          ))}
+        </div>
+      )}
+
+      {empty && (
+        <Panel title="Nothing to show yet">
+          <Empty>Your role does not include any modules with numbers to display.</Empty>
+        </Panel>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {data?.blog && (
+          <ModuleCard
+            icon={FiBookOpen}
+            title="Blogs"
+            to="/blogs"
+            headline={data.blog.total}
+            unit="posts"
+            rows={[
+              ['Published', data.blog.published, 'emerald'],
+              ['Drafts', data.blog.drafts, 'amber'],
+            ]}
+          />
+        )}
+        {data?.caseStudy && (
+          <ModuleCard
+            icon={FiFileText}
+            title="Case studies"
+            to="/case-studies"
+            headline={data.caseStudy.total}
+            unit="studies"
+            rows={[
+              ['Published', data.caseStudy.published, 'emerald'],
+              ['Drafts', data.caseStudy.drafts, 'amber'],
+            ]}
+          />
+        )}
+        {data?.announcement && (
+          <ModuleCard
+            icon={FiBell}
+            title="Announcements"
+            to="/announcements"
+            headline={data.announcement.live}
+            unit="live now"
+            rows={[
+              ['Upcoming', data.announcement.upcoming, 'accent'],
+              ['Ended / off', data.announcement.ended, 'muted'],
+            ]}
+          />
+        )}
+        {data?.users && (
+          <ModuleCard
+            icon={FiShield}
+            title="Users"
+            to="/access-control"
+            headline={data.users.total}
+            unit="users"
+            rows={[
+              ['Active', data.users.active, 'emerald'],
+              ['Locked', data.users.locked, data.users.locked > 0 ? 'amber' : 'muted'],
+              ...(data.roles ? [['Roles', data.roles.total, 'accent'] as Row] : []),
+            ]}
+          />
+        )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard icon={FiBookOpen} label="Total blogs" value={stats?.total} loading={isLoading} />
-        <StatCard
-          icon={FiCheckCircle}
-          label="Published"
-          value={stats?.published}
-          loading={isLoading}
-          tone="emerald"
-        />
-        <StatCard
-          icon={FiEdit3}
-          label="Drafts"
-          value={stats?.drafts}
-          loading={isLoading}
-          tone="amber"
-        />
-        <StatCard
-          icon={FiCalendar}
-          label="Published this month"
-          value={stats?.publishedThisMonth}
-          loading={isLoading}
-        />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-5">
-        <Panel title="Publishing activity" subtitle="Blogs published in the last 6 months" className="lg:col-span-3">
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats?.byMonth ?? []} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
-                <XAxis dataKey="label" tickLine={false} axisLine={false} tick={AXIS_TICK} />
-                <YAxis allowDecimals={false} tickLine={false} axisLine={false} tick={AXIS_TICK} />
-                <Tooltip
-                  cursor={{ fill: 'var(--accent-bg)' }}
-                  contentStyle={TOOLTIP_STYLE}
-                  labelStyle={{ color: 'var(--text-h)' }}
-                  formatter={(value) => [value, 'Published']}
-                />
-                <Bar dataKey="count" fill="var(--accent)" radius={[6, 6, 0, 0]} maxBarSize={44} />
-              </BarChart>
-            </ResponsiveContainer>
+      {content.length > 0 && (
+        <Panel title="Website content" subtitle="Items shown on the website, out of all items">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {content.map((c) => {
+              const meta = CONTENT[c.subject]
+              if (!meta) return null
+              const IconComponent = meta.icon
+              return (
+                <Link
+                  key={c.subject}
+                  to={meta.to}
+                  className="flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-surface-2"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-bg text-accent">
+                    <IconComponent size={17} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-heading">{meta.label}</span>
+                    <span className="text-xs text-body">
+                      <b className="font-semibold text-heading">{c.visible}</b> of {c.total} visible
+                    </span>
+                  </span>
+                </Link>
+              )
+            })}
           </div>
         </Panel>
+      )}
 
-        <Panel title="Blogs by category" subtitle="All posts, including drafts" className="lg:col-span-2">
-          {categoryData.length === 0 ? (
-            <Empty>No blogs yet.</Empty>
-          ) : (
-            <>
-              <div className="h-44">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryData}
-                      dataKey="count"
-                      nameKey="name"
-                      innerRadius={46}
-                      outerRadius={72}
-                      paddingAngle={2}
-                      stroke="var(--bg)"
-                    >
-                      {categoryData.map((_, i) => (
-                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={{ color: 'var(--text-h)' }} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <ul className="mt-2 space-y-1.5">
-                {categoryData.map((c, i) => (
-                  <li key={c.name} className="flex items-center justify-between text-xs">
-                    <span className="flex items-center gap-2 text-heading">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full"
-                        style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
-                      />
-                      {c.name}
-                    </span>
-                    <span className="text-body">{c.count}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
+      {data && (data.blog || data.caseStudy) && (
+        <Panel title="Recent activity" subtitle="Latest blogs and case studies">
+          <RecentList items={data.recent} />
         </Panel>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Recent blogs" action={<SeeAll />}>
-          <BlogList blogs={stats?.recent} loading={isLoading} categoryName={categoryName} showStatus />
-        </Panel>
-        <Panel title="Drafts to finish" action={<SeeAll />}>
-          <BlogList
-            blogs={stats?.drafted}
-            loading={isLoading}
-            categoryName={categoryName}
-            emptyText="No drafts — everything is published."
-          />
-        </Panel>
-      </div>
+      )}
     </div>
   )
 }
 
-function SeeAll() {
+function ModuleCard({
+  icon: IconComponent,
+  title,
+  to,
+  headline,
+  unit,
+  rows,
+}: {
+  icon: Icon
+  title: string
+  to: string
+  headline: number
+  unit: string
+  rows: Row[]
+}) {
   return (
-    <Link to="/blogs" className="text-xs font-medium text-accent hover:underline">
-      View all
+    <Link to={to} className="rounded-xl border border-border bg-surface p-5 transition-colors hover:bg-surface-2">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-bg text-accent">
+          <IconComponent size={19} />
+        </span>
+        <h3 className="text-sm font-semibold text-heading">{title}</h3>
+      </div>
+      <p className="mt-4 text-3xl font-semibold text-heading">
+        {headline} <span className="text-sm font-normal text-body">{unit}</span>
+      </p>
+      <ul className="mt-3 space-y-1.5">
+        {rows.map(([label, value, tone]) => (
+          <li key={label} className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2 text-body">
+              <span className={`h-2 w-2 rounded-full ${DOT[tone]}`} />
+              {label}
+            </span>
+            <span className="font-medium text-heading">{value}</span>
+          </li>
+        ))}
+      </ul>
     </Link>
   )
 }
 
-const TONE: Record<string, string> = {
-  accent: 'bg-accent-bg text-accent',
-  emerald: 'bg-emerald-500/10 text-emerald-500',
-  amber: 'bg-amber-500/10 text-amber-500',
-}
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  loading,
-  tone = 'accent',
-}: {
-  icon: ComponentType<{ size?: number }>
-  label: string
-  value?: number
-  loading: boolean
-  tone?: 'accent' | 'emerald' | 'amber'
-}) {
-  return (
-    <div className="flex items-center gap-4 rounded-xl border border-border bg-surface p-5">
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${TONE[tone]}`}>
-        <Icon size={20} />
-      </div>
-      <div>
-        <p className="text-sm text-body">{label}</p>
-        {loading ? (
-          <div className="mt-1 h-7 w-12 animate-pulse rounded bg-surface-2" />
-        ) : (
-          <p className="text-2xl font-semibold text-heading">{value ?? 0}</p>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function Panel({
-  title,
-  subtitle,
-  action,
-  className = '',
-  children,
-}: {
-  title: string
-  subtitle?: string
-  action?: ReactNode
-  className?: string
-  children: ReactNode
-}) {
-  return (
-    <section className={`rounded-xl border border-border bg-surface p-5 ${className}`}>
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-heading">{title}</h3>
-          {subtitle && <p className="mt-0.5 text-xs text-body">{subtitle}</p>}
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
-  )
-}
-
-function Empty({ children }: { children: ReactNode }) {
-  return <p className="py-6 text-center text-sm text-body">{children}</p>
-}
-
-function BlogList({
-  blogs,
-  loading,
-  categoryName,
-  showStatus,
-  emptyText = 'No blogs yet.',
-}: {
-  blogs?: Blog[]
-  loading: boolean
-  categoryName: (id: string) => string
-  showStatus?: boolean
-  emptyText?: string
-}) {
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-10 animate-pulse rounded bg-surface-2" />
-        ))}
-      </div>
-    )
-  }
-  if (!blogs?.length) return <Empty>{emptyText}</Empty>
-
+function RecentList({ items }: { items: DashboardOverview['recent'] }) {
+  if (!items.length) return <Empty>Nothing published or drafted yet.</Empty>
   return (
     <ul className="divide-y divide-border">
-      {blogs.map((b) => (
-        <li key={b.id} className="flex items-center justify-between gap-3 py-2.5">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-heading">{b.title}</p>
-            <p className="truncate text-xs text-body">
-              {categoryName(b.categoryId)} · {b.author} · {formatDate(b.publishedAt)}
-            </p>
-          </div>
-          {showStatus && (
+      {items.map((item) => (
+        <li key={`${item.type}-${item.id}`}>
+          <Link to={RECENT_TYPE[item.type].to} className="flex items-center justify-between gap-3 py-2.5">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-heading">{item.title}</p>
+              <p className="text-xs text-body">
+                {RECENT_TYPE[item.type].label} · {formatDate(item.date)}
+              </p>
+            </div>
             <span
               className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                b.publishStatus === 'PUBLISHED'
+                item.publishStatus === 'PUBLISHED'
                   ? 'bg-emerald-500/10 text-emerald-600'
                   : 'bg-amber-500/10 text-amber-600'
               }`}
             >
-              {b.publishStatus === 'PUBLISHED' ? 'Published' : 'Draft'}
+              {item.publishStatus === 'PUBLISHED' ? 'Published' : 'Draft'}
             </span>
-          )}
+          </Link>
         </li>
       ))}
     </ul>
