@@ -7,6 +7,7 @@ import AnnouncementsPage from '../pages/announcements'
 import WebsiteContentPage from '../pages/website-content'
 import SiteSettingsPage from '../pages/site-settings'
 import AccessControlPage from '../pages/access-control'
+import ProfilePage from '../pages/profile'
 import { useSession } from '../hooks'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PublicRoute } from './PublicRoute'
@@ -47,6 +48,7 @@ export function AppRoutes() {
       <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+        <Route path="/profile" element={<ProfilePage />} />
         <Route
           path="/dashboard"
           element={<PermissionRoute anyOf={[['dashboard', 'read']]}><DashboardPage /></PermissionRoute>}

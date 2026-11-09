@@ -13,7 +13,7 @@ type MenuItem = {
 }
 
 const ACCOUNT_ITEMS: MenuItem[] = [
-  { label: 'My Profile', icon: <FiUser size={16} /> },
+  { label: 'My Profile', icon: <FiUser size={16} />, to: '/profile' },
 ]
 
 type UserMenuProps = {

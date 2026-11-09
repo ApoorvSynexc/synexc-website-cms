@@ -11,6 +11,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/blogs': 'Blogs',
   '/case-studies': 'Case Studies',
   '/announcements': 'Announcements',
+  '/profile': 'My Profile',
 }
 
 export function Navbar() {
