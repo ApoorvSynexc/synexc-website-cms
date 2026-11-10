@@ -39,13 +39,15 @@ export const announcementSchema = Joi.object<AnnouncementFormValues>({
   ctaLabel: Joi.string().trim().max(40).allow('').messages({
     'string.max': 'Button text must be at most 40 characters',
   }),
+  // Same rule as the backend: a full http(s) link, or a path on the website such as /services/zoho
   ctaUrl: Joi.string()
     .trim()
-    .uri({ scheme: ['http', 'https'] })
+    .max(500)
+    .pattern(/^(https?:\/\/\S+|\/\S*)$/)
     .allow('')
     .messages({
-      'string.uri': 'Enter a valid http(s) link',
-      'string.uriCustomScheme': 'Enter a valid link starting with https://',
+      'string.max': 'Link must be at most 500 characters',
+      'string.pattern.base': 'Enter an https:// link or a site path like /contact-us',
     }),
   image: Joi.object().allow(null).messages({ 'object.base': 'Upload a valid image' }),
   startDate: date.required().messages({
