@@ -2,20 +2,16 @@ import type { ComponentType } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FiAward,
-  FiBarChart2,
   FiBell,
   FiBookOpen,
   FiCamera,
-  FiClock,
   FiFileText,
   FiHelpCircle,
   FiImage,
   FiAlertCircle,
-  FiLayers,
   FiMessageSquare,
   FiPlus,
   FiShield,
-  FiUsers,
 } from 'react-icons/fi'
 import { Empty, Panel, Typography } from '../../components'
 import { useSession } from '../../hooks'
@@ -28,14 +24,10 @@ type Row = [label: string, value: number, tone: Tone]
 
 /** Website-content lists: label, icon and the page each one lives on. */
 const CONTENT: Record<string, { label: string; icon: Icon; to: string }> = {
-  hero_slide: { label: 'Hero slides', icon: FiLayers, to: '/website-content/hero-slide' },
   testimonial: { label: 'Testimonials', icon: FiMessageSquare, to: '/website-content/testimonial' },
   faq: { label: 'FAQs', icon: FiHelpCircle, to: '/website-content/faq' },
   partner_logo: { label: 'Partner logos', icon: FiImage, to: '/website-content/partner-logo' },
-  team_member: { label: 'Leadership', icon: FiUsers, to: '/website-content/leadership' },
-  timeline_event: { label: 'Timeline events', icon: FiClock, to: '/website-content/timeline' },
   certification: { label: 'Certifications', icon: FiAward, to: '/website-content/certification' },
-  key_stat: { label: 'Key stats', icon: FiBarChart2, to: '/website-content/key-stat' },
   gallery_image: { label: 'Gallery photos', icon: FiCamera, to: '/website-content/gallery' },
 }
 

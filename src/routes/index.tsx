@@ -15,14 +15,10 @@ import { PermissionRoute } from './PermissionRoute'
 import { AppLayout } from '../layout/AppLayout'
 
 const WEBSITE_CONTENT_SUBJECTS = [
-  'hero_slide',
   'testimonial',
   'faq',
   'partner_logo',
-  'team_member',
-  'timeline_event',
   'certification',
-  'key_stat',
   'gallery_image',
 ]
 
@@ -73,7 +69,7 @@ export function AppRoutes() {
             </PermissionRoute>
           }
         />
-        <Route path="/website-content" element={<Navigate to="/website-content/hero-slide" replace />} />
+        <Route path="/website-content" element={<Navigate to="/website-content/testimonial" replace />} />
         <Route
           path="/website-content/:module"
           element={

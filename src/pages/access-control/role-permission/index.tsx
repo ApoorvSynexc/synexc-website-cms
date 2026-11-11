@@ -12,20 +12,19 @@ const SUBJECT_LABEL: Record<string, string> = {
   blog_category: 'Blog Categories',
   case_study: 'Case Studies',
   announcement: 'Announcements',
-  hero_slide: 'Hero Slides',
   testimonial: 'Testimonials',
   faq: 'FAQs',
   partner_logo: 'Partner Logos',
-  team_member: 'Leadership',
-  timeline_event: 'Company Timeline',
   certification: 'Certifications',
-  key_stat: 'Key Stats',
   gallery_image: 'Photo Gallery',
   site_settings: 'Site Settings',
   user: 'Users',
   role: 'Roles',
   role_permission: 'Role Permissions',
 }
+
+/** Subjects the backend still has but the CMS no longer manages, so they're left out of the matrix. */
+const HIDDEN_SUBJECTS = new Set(['hero_slide', 'team_member', 'timeline_event', 'key_stat'])
 
 const ACTION_LABEL: Record<string, string> = {
   read: 'View',
@@ -49,7 +48,10 @@ export default function RolePermissionModule() {
   })
 
   const roles = getRoles.data ?? []
-  const permissions = getPermissions.data ?? []
+  const permissions = useMemo(
+    () => (getPermissions.data ?? []).filter((p) => !HIDDEN_SUBJECTS.has(p.subject)),
+    [getPermissions.data],
+  )
   const selectedRole = roles.find((r) => r.id === roleId)
   const locked = Boolean(selectedRole?.isSystem) || !canEdit
 
@@ -136,7 +138,7 @@ export default function RolePermissionModule() {
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Typography variant="body-sm" color="body">
-              {selected.size} of {permissions.length} permissions selected
+              {permissions.filter((p) => selected.has(p.id)).length} of {permissions.length} permissions selected
             </Typography>
             <div className="flex items-center gap-2">
               <Button

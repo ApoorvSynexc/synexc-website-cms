@@ -18,8 +18,8 @@ type Options<T extends ContentItem, I extends { isActive: boolean }> = {
 }
 
 /**
- * The small, ordered lists on the website (hero slides, testimonials, FAQs, partner logos, team, timeline,
- * certifications, key stats, gallery) all share the same six endpoints:
+ * The small, ordered lists on the website (testimonials, FAQs, partner logos, certifications, gallery)
+ * all share the same six endpoints:
  *   GET /list · POST / · PUT / · DELETE /?id= · PUT /move { id, direction }
  * "Visible on website" is the row `status` (ACTIVE / INACTIVE); the pages work with a plain `isActive` boolean.
  */
